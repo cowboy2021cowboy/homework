@@ -169,6 +169,90 @@
     color: #888;
     font-size: 0.9em;
   }
+  /* Reward animations */
+  @keyframes popReward {
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -80%) scale(1); opacity: 0; }
+  }
+  @keyframes shakeWrong {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    20% { transform: translate(-55%, -50%) rotate(-6deg); }
+    40% { transform: translate(-45%, -50%) rotate(6deg); }
+    60% { transform: translate(-54%, -50%) rotate(-4deg); }
+    80% { transform: translate(-46%, -50%) rotate(3deg); }
+  }
+  @keyframes cardShake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-12px); }
+    30% { transform: translateX(10px); }
+    45% { transform: translateX(-8px); }
+    60% { transform: translateX(6px); }
+    75% { transform: translateX(-3px); }
+  }
+  @keyframes cardGlow {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(46,204,113,0.7); border-color: #2ecc71; }
+    35%  { transform: scale(1.04); box-shadow: 0 0 0 18px rgba(46,204,113,0); background: #eafff2; border-color: #2ecc71; }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+  }
+  @keyframes confettiFly {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(var(--dx), calc(var(--dy) + 220px)) rotate(var(--rot)); opacity: 0; }
+  }
+  @keyframes starBump {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.35) rotate(-4deg); }
+  }
+  .glow-correct { animation: cardGlow 0.8s ease-out; }
+  .shake-card { animation: cardShake 0.55s ease; border-color: #e74c3c !important; background: #fff1f0 !important; }
+  .stars.bump { animation: starBump 0.5s ease; }
+  .feedback.correct { animation: starBump 0.6s ease; }
+  .feedback.try-again { animation: cardShake 0.5s ease; }
+  .confetti {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    width: 10px;
+    height: 14px;
+    z-index: 999998;
+    pointer-events: none;
+    animation: confettiFly 1.3s cubic-bezier(.2,.7,.4,1) forwards;
+  }
+  .reward-burst {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4.5em;
+    z-index: 999999;
+    pointer-events: none;
+    animation: popReward 1.6s ease-out forwards;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
+  }
+  .big-celebrate {
+    position: fixed; top: 25%; left: 50%; transform: translate(-50%, -50%);
+    background: #fff; border: 4px solid #ffd93d; border-radius: 20px;
+    padding: 20px 30px; font-size: 1.5em; font-weight: bold; text-align: center;
+    z-index: 999999; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: popReward 2.2s ease-out forwards;
+  }
+  .wrong-flash {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #e74c3c;
+    background: white;
+    padding: 20px 30px;
+    border-radius: 20px;
+    border: 4px solid #e74c3c;
+    z-index: 999999;
+    pointer-events: none;
+    text-align: center;
+    animation: shakeWrong 0.7s ease;
+  }
 </style>
 </head>
 <body>
@@ -231,6 +315,15 @@
       <button onclick="blendWord()">Blend the Word!<br><span class="zh">拼读单词！</span></button>
       <div class="feedback" id="readFeedback"></div>
     </div>
+    <details style="margin:15px 0; background:#f8f9fa; border-radius:12px; padding:12px 16px; border:2px solid #ffd93d;">
+      <summary style="cursor:pointer; font-weight:bold;">🎙️ Parent: record real voice sounds<br><span class="zh">家长：录制真人发音</span></summary>
+      <p style="font-size:0.95em;">
+        Record each sound in your own voice (about 1 second). Say only the <em>sound</em>, not the letter name. Recordings are saved on this device. To make them work on every device, tap <strong>Download all</strong> and upload the files (a.wav, m.wav, n.wav, s.wav, t.wav) to GitHub next to index.html (or in a folder named <strong>sounds</strong>).<br>
+        <span class="zh">用自己的声音录下每个发音（约1秒）。只读发音，不要读字母名称。录音保存在这台设备上；点“全部下载”，把文件上传到 GitHub 里 index.html 旁边（或 sounds 文件夹），所有设备都能使用。</span>
+      </p>
+      <div id="recorderList"></div>
+      <button onclick="downloadAllClips()" style="margin-top:10px;">⬇ Download all / 全部下载</button>
+    </details>
     <div class="nav-buttons">
       <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
       <button onclick="nextReading()">Next Word →<br><span class="zh">下一个单词</span></button>
@@ -384,115 +477,136 @@ let progress = 0;
 const maxProgress = 100;
 
 function updateStars(amount = 1) {
+  const before = stars;
   stars += amount;
-  document.getElementById('starCount').textContent = stars;
+  const starEl = document.getElementById('starCount');
+  starEl.textContent = stars;
+  bump(starEl.parentElement);
   progress = Math.min(progress + 8, maxProgress);
   document.getElementById('progressFill').style.width = progress + '%';
-  reward();  // always reward on correct
-  if (stars % 5 === 0) bigCelebrate();
+  // Every 5 stars gets a bigger celebration
+  if (Math.floor(stars / 5) > Math.floor(before / 5)) bigCelebrate();
+  else reward();
 }
 
-function playRewardSound() {
-  // Try Web Audio first
+// ===== SOUND (one shared AudioContext) =====
+let audioCtx = null;
+function getAudio() {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContext();
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    const now = ctx.currentTime;
-    [523, 659, 784, 1046].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45 + i * 0.1);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now + i * 0.1);
-      osc.stop(now + 0.55 + i * 0.1);
-    });
-  } catch (e) {
-    // Fallback to speech if audio fails
-    speak('Great job!', 1.1);
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+
+function tone(ctx, freq, start, dur, type = 'sine', vol = 0.2, slideTo = null) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, start);
+  if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, start + dur);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(start);
+  osc.stop(start + dur + 0.05);
+}
+
+// Happy rising arpeggio + sparkle on top
+function playRewardSound(big = false) {
+  const ctx = getAudio();
+  if (!ctx) { speak('Great job!', 1.1); return; }
+  const t = ctx.currentTime;
+  const notes = big ? [523, 659, 784, 1046, 1318, 1568] : [523, 659, 784, 1046];
+  notes.forEach((f, i) => {
+    tone(ctx, f, t + i * 0.09, 0.35, 'triangle', 0.22);
+    tone(ctx, f * 2, t + i * 0.09, 0.2, 'sine', 0.06);
+  });
+  // sparkle
+  [2093, 2637, 3136].forEach((f, i) =>
+    tone(ctx, f, t + notes.length * 0.09 + i * 0.05, 0.25, 'sine', 0.07));
+}
+
+// Soft, friendly "oops" - two gentle falling notes (not harsh)
+function playWrongSound() {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  tone(ctx, 330, t, 0.22, 'sine', 0.22, 280);
+  tone(ctx, 247, t + 0.2, 0.35, 'sine', 0.22, 190);
+}
+
+// ===== ANIMATIONS =====
+function bump(el) {
+  if (!el) return;
+  el.classList.remove('bump');
+  void el.offsetWidth; // restart animation
+  el.classList.add('bump');
+}
+
+function glowCard(cls) {
+  const activity = document.querySelector('.activity.active .card') ||
+                   document.querySelector('.activity.active');
+  if (!activity) return;
+  activity.classList.remove('glow-correct', 'shake-card');
+  void activity.offsetWidth;
+  activity.classList.add(cls);
+  setTimeout(() => activity.classList.remove(cls), 900);
+}
+
+function confetti(count = 40) {
+  const colors = ['#ff6b6b', '#4ecdc4', '#ffd93d', '#a29bfe', '#2ecc71', '#ff9ff3'];
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 120 + Math.random() * 220;
+    piece.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    piece.style.setProperty('--dy', (Math.sin(angle) * dist - 80) + 'px');
+    piece.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.animationDelay = (Math.random() * 0.1) + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 1500);
   }
 }
 
 function reward() {
   playRewardSound();
-  // Big star burst
+  glowCard('glow-correct');
+  confetti(40);
   const burst = document.createElement('div');
-  burst.innerHTML = '⭐✨🌟🎉⭐✨';
-  burst.style.cssText = `
-    position: fixed; top: 35%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 4em; z-index: 99999; pointer-events: none;
-    text-shadow: 0 0 10px #fff;
-    animation: popReward 1.5s ease-out forwards;
-  `;
+  burst.className = 'reward-burst';
+  burst.textContent = '⭐✨🌟🎉⭐';
   document.body.appendChild(burst);
-  setTimeout(() => burst.remove(), 1500);
-
-  // Also flash the feedback
-  document.querySelectorAll('.feedback.correct').forEach(el => {
-    el.style.animation = 'none';
-    el.offsetHeight; // reflow
-    el.style.animation = 'pulseCorrect 0.6s ease';
-  });
+  setTimeout(() => burst.remove(), 1600);
 }
 
 function wrongAnswer() {
-  // Shake + red flash
+  playWrongSound();
+  glowCard('shake-card');
   const flash = document.createElement('div');
-  flash.innerHTML = '😅 Try again!';
-  flash.style.cssText = `
-    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 2.2em; font-weight: bold; color: #e74c3c; z-index: 99999;
-    background: rgba(255,255,255,0.9); padding: 15px 25px; border-radius: 15px;
-    border: 3px solid #e74c3c; pointer-events: none;
-    animation: shakeWrong 0.6s ease;
-  `;
+  flash.className = 'wrong-flash';
+  flash.textContent = '😅 Try again! 再试一次！';
   document.body.appendChild(flash);
-  setTimeout(() => flash.remove(), 700);
+  setTimeout(() => flash.remove(), 900);
 }
 
 function bigCelebrate() {
-  playRewardSound();
+  playRewardSound(true);
+  glowCard('glow-correct');
+  confetti(90);
   const msg = document.createElement('div');
   msg.innerHTML = '🎉 Awesome! More stars! / 太棒了！🌟';
-  msg.style.cssText = `
-    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    background: #fff; border: 4px solid #ffd93d; border-radius: 20px;
-    padding: 20px 30px; font-size: 1.5em; font-weight: bold; text-align: center;
-    z-index: 100000; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    animation: popReward 2.2s ease-out forwards;
-  `;
+  msg.className = 'big-celebrate';
   document.body.appendChild(msg);
   setTimeout(() => msg.remove(), 2200);
 }
-
-// Animation styles
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes popReward {
-    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-    30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-    100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
-  }
-  @keyframes shakeWrong {
-    0%, 100% { transform: translate(-50%, -50%) rotate(0); }
-    20% { transform: translate(-52%, -50%) rotate(-5deg); }
-    40% { transform: translate(-48%, -50%) rotate(5deg); }
-    60% { transform: translate(-52%, -50%) rotate(-3deg); }
-    80% { transform: translate(-48%, -50%) rotate(3deg); }
-  }
-  @keyframes pulseCorrect {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-  }
-`;
-document.head.appendChild(style);
 
 function showMenu() {
   document.querySelectorAll('.activity').forEach(el => el.classList.remove('active'));
@@ -539,46 +653,351 @@ function speak(text, rate = 0.7) {
   speechSynthesis.speak(utter);
 }
 
-// Speak a list of sounds one by one, clearly, waiting for each to finish
-let soundQueue = [];
+// ===== PHONICS SOUNDS =====
+// The browser voice can't make pure letter sounds: it says letter names
+// ("em") or spells out "mmm" as "m m m". So the sounds are generated
+// directly with Web Audio, which gives one clean sound every time.
 let isSpeakingSounds = false;
 
-function speakSoundsSequentially(sounds) {
+function vowelA(ctx, t, dur) {
+  // short "a" as in "cat": formants ~ 700 / 1700 / 2500 Hz
+  const src = ctx.createOscillator();
+  src.type = 'sawtooth';
+  src.frequency.setValueAtTime(130, t);
+  src.frequency.linearRampToValueAtTime(115, t + dur);
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.9, t + 0.05);
+  out.gain.setValueAtTime(0.9, t + dur - 0.12);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  [[700, 1.0, 8], [1700, 0.6, 10], [2500, 0.3, 12]].forEach(([f, g, q]) => {
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+    const gn = ctx.createGain(); gn.gain.value = g;
+    src.connect(bp); bp.connect(gn); gn.connect(out);
+  });
+  out.connect(ctx.destination);
+  src.start(t); src.stop(t + dur + 0.05);
+}
+
+function nasal(ctx, t, dur, midFreq) {
+  // /m/ and /n/: low hum with a soft mid resonance
+  const src = ctx.createOscillator();
+  src.type = 'sawtooth';
+  src.frequency.value = 120;
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 450; lp.Q.value = 4;
+  const mid = ctx.createBiquadFilter();
+  mid.type = 'bandpass'; mid.frequency.value = midFreq; mid.Q.value = 6;
+  const midGain = ctx.createGain(); midGain.gain.value = 0.25;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(1.0, t + 0.06);
+  out.gain.setValueAtTime(1.0, t + dur - 0.1);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(lp); lp.connect(out);
+  src.connect(mid); mid.connect(midGain); midGain.connect(out);
+  out.connect(ctx.destination);
+  src.start(t); src.stop(t + dur + 0.05);
+}
+
+function noiseBuffer(ctx, seconds) {
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * seconds), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+function hissS(ctx, t, dur) {
+  // /s/: steady hiss
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx, dur + 0.1);
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 5500;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.55, t + 0.08);
+  out.gain.setValueAtTime(0.55, t + dur - 0.12);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(hp); hp.connect(out); out.connect(ctx.destination);
+  src.start(t); src.stop(t + dur + 0.1);
+}
+
+function burstT(ctx, t) {
+  // /t/: tiny click of noise plus a very short soft "uh"
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx, 0.1);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 4000; bp.Q.value = 1.2;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.9, t);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  src.connect(bp); bp.connect(out); out.connect(ctx.destination);
+  src.start(t); src.stop(t + 0.1);
+}
+
+const phonemePlayers = {
+  'a': (ctx, t) => { vowelA(ctx, t, 0.6);        return 0.6; },
+  'm': (ctx, t) => { nasal(ctx, t, 0.7, 1100);   return 0.7; },
+  'n': (ctx, t) => { nasal(ctx, t, 0.7, 1600);   return 0.7; },
+  's': (ctx, t) => { hissS(ctx, t, 0.7);         return 0.7; },
+  't': (ctx, t) => { burstT(ctx, t);             return 0.15; }
+};
+
+// Recorded human clips (if any) are used first; generated sounds are the fallback.
+async function speakSoundsSequentially(sounds) {
+  const ctx = getAudio();
+  if (!ctx) return;
   speechSynthesis.cancel();
-  soundQueue = [...sounds];
   isSpeakingSounds = true;
-  speakNextSound();
+  let t = ctx.currentTime;
+  try {
+    const keys = sounds.map(sd => sd.replace(/\//g, '').toLowerCase());
+    for (const k of keys) await getClip(k);
+    t = ctx.currentTime + 0.05;
+    keys.forEach(k => {
+      const buf = clipBuffers[k];
+      if (buf) {
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(t);
+        t += buf.duration + 0.35;
+      } else if (phonemePlayers[k]) {
+        t += phonemePlayers[k](ctx, t) + 0.4;
+      }
+    });
+  } catch (e) { console.error(e); }
+  setTimeout(() => { isSpeakingSounds = false; }, Math.max(0, (t - ctx.currentTime) * 1000));
 }
 
-function speakNextSound() {
-  if (soundQueue.length === 0) {
-    isSpeakingSounds = false;
-    return;
+// ===== RECORD YOUR OWN VOICE FOR THE SOUNDS =====
+const phonicsKeys = ['a', 'm', 'n', 's', 't'];
+const phonicsHints = {
+  a: 'short "a" as in cat (not "ay")',
+  m: 'hum "mmm" (not "em")',
+  n: 'hum "nnn" (not "en")',
+  s: 'hiss "sss" (not "ess")',
+  t: 'a quick "t" (not "tee")'
+};
+const clipRaw = {};      // key -> ArrayBuffer: recorded on THIS device
+const repoRaw = {};      // key -> ArrayBuffer: sounds/ folder uploaded with the site
+const clipBuffers = {};  // key -> decoded AudioBuffer
+let phonicsDB = null;
+let activeRecorder = null;
+
+function openPhonicsDB() {
+  return new Promise(resolve => {
+    try {
+      const req = indexedDB.open('liam-phonics', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('clips');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+function dbOp(mode, fn) {
+  return new Promise(resolve => {
+    if (!phonicsDB) return resolve(null);
+    try {
+      const tx = phonicsDB.transaction('clips', mode);
+      const req = fn(tx.objectStore('clips'));
+      tx.oncomplete = () => resolve(req && req.result !== undefined ? req.result : true);
+      tx.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+
+async function getClip(key) {
+  if (clipBuffers[key]) return clipBuffers[key];
+  const raw = clipRaw[key] || repoRaw[key];
+  if (!raw) return null;
+  try {
+    const ctx = getAudio();
+    clipBuffers[key] = await ctx.decodeAudioData(raw.slice(0));
+  } catch (e) { console.error(e); }
+  return clipBuffers[key] || null;
+}
+
+function encodeWav(samples, sampleRate) {
+  const buf = new ArrayBuffer(44 + samples.length * 2);
+  const v = new DataView(buf);
+  const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); w(8, 'WAVE');
+  w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, samples.length * 2, true);
+  for (let i = 0; i < samples.length; i++) {
+    const x = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true);
   }
-  const sound = soundQueue.shift();
-  // Better approximations that TTS pronounces as sounds, not letter names
-  const soundMap = {
-    '/a/': 'ah',
-    '/m/': 'mmm',
-    '/t/': 'tuh',
-    '/n/': 'nnn',
-    '/S/': 'sss',
-    '/s/': 'sss'
-  };
-  const spoken = soundMap[sound] || sound.replace(/[/]/g, '');
-
-  const utter = new SpeechSynthesisUtterance(spoken);
-  utter.rate = 0.45;          // slower for clear sound
-  utter.pitch = 1.0;
-  utter.lang = 'en-US';
-  utter.onend = () => {
-    setTimeout(speakNextSound, 400);
-  };
-  utter.onerror = () => {
-    setTimeout(speakNextSound, 400);
-  };
-  speechSynthesis.speak(utter);
+  return buf;
 }
+
+// Trim silence at both ends, normalise the volume, add tiny fades, save as WAV
+function trimAndEncode(audioBuf) {
+  const data = audioBuf.getChannelData(0);
+  const sr = audioBuf.sampleRate;
+  let peak = 0;
+  for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+  if (peak < 0.01) return null;                       // nothing recorded
+  const thr = peak * 0.12;
+  let start = 0, end = data.length - 1;
+  while (start < end && Math.abs(data[start]) < thr) start++;
+  while (end > start && Math.abs(data[end]) < thr) end--;
+  start = Math.max(0, start - Math.round(sr * 0.03));
+  end = Math.min(data.length - 1, end + Math.round(sr * 0.08));
+  const out = new Float32Array(end - start + 1);
+  const gain = 0.9 / peak;
+  const fade = Math.round(sr * 0.01);
+  for (let i = 0; i < out.length; i++) {
+    let g = gain;
+    if (i < fade) g *= i / fade;
+    if (out.length - i < fade) g *= (out.length - i) / fade;
+    out[i] = data[start + i] * g;
+  }
+  return encodeWav(out, sr);
+}
+
+function statusFor(key) {
+  if (clipRaw[key]) return ['✓ Saved on this device / 已保存在本设备', true];
+  if (repoRaw[key]) return ['✓ Using sound from website (sounds/' + key + ') / 使用网站录音', true];
+  return ['Using computer sound / 使用电脑发音', false];
+}
+
+function setRecStatus(key, text, ok) {
+  if (text === undefined) [text, ok] = statusFor(key);
+  const el = document.getElementById('recStatus_' + key);
+  if (el) { el.textContent = text; el.style.color = ok ? '#2ecc71' : '#666'; }
+  const show = (id, on) => { const b = document.getElementById(id); if (b) b.style.display = on ? 'inline-block' : 'none'; };
+  show('recPlay_' + key, !!(clipRaw[key] || repoRaw[key]));
+  show('recDl_' + key, !!clipRaw[key]);
+  show('recClear_' + key, !!clipRaw[key]);
+}
+
+function downloadClip(key) {
+  const raw = clipRaw[key];
+  if (!raw) return;
+  const url = URL.createObjectURL(new Blob([raw], { type: 'audio/wav' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = key + '.wav';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadAllClips() {
+  const keys = phonicsKeys.filter(k => clipRaw[k]);
+  if (!keys.length) { alert('Record at least one sound first. / 请先录至少一个发音。'); return; }
+  keys.forEach((k, i) => setTimeout(() => downloadClip(k), i * 500));
+}
+
+// Load sounds/a.wav, sounds/m.wav ... if they were uploaded next to index.html
+async function loadRepoClips() {
+  for (const key of phonicsKeys) {
+    // look in the sounds/ folder first, then next to index.html
+    for (const path of ['sounds/' + key, key]) {
+      for (const ext of ['wav', 'mp3']) {
+        if (repoRaw[key]) break;
+        try {
+          const res = await fetch(path + '.' + ext, { cache: 'no-cache' });
+          if (res.ok) repoRaw[key] = await res.arrayBuffer();
+        } catch (e) { /* no file (or opened as a local file) - use fallback */ }
+      }
+    }
+  }
+}
+
+async function toggleRecord(key) {
+  const btn = document.getElementById('recBtn_' + key);
+  // second tap = stop
+  if (activeRecorder && activeRecorder.key === key) { activeRecorder.rec.stop(); return; }
+  if (activeRecorder) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream);
+    const chunks = [];
+    activeRecorder = { key, rec };
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      clearTimeout(activeRecorder && activeRecorder.timer);
+      stream.getTracks().forEach(tr => tr.stop());
+      activeRecorder = null;
+      btn.innerHTML = '🎙️ Record / 录音';
+      btn.classList.remove('secondary');
+      try {
+        const ctx = getAudio();
+        const decoded = await ctx.decodeAudioData(await new Blob(chunks).arrayBuffer());
+        const wav = trimAndEncode(decoded);
+        if (!wav) { setRecStatus(key, 'Too quiet - try again / 声音太小，请重试', false); return; }
+        clipRaw[key] = wav;
+        delete clipBuffers[key];
+        await dbOp('readwrite', st => st.put(wav, key));
+        setRecStatus(key);
+        previewClip(key);
+      } catch (e) {
+        console.error(e);
+        setRecStatus(key, 'Could not save - try again / 保存失败，请重试', false);
+      }
+    };
+    rec.start();
+    btn.innerHTML = '⏹ Stop / 停止';
+    btn.classList.add('secondary');
+    setRecStatus(key, 'Recording... say the sound! / 录音中…请发音！', false);
+    activeRecorder.timer = setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 2500);
+  } catch (e) {
+    console.error(e);
+    activeRecorder = null;
+    setRecStatus(key, 'Microphone not available. Please allow mic access. / 无法使用麦克风，请允许访问。', false);
+  }
+}
+
+async function previewClip(key) {
+  const ctx = getAudio();
+  const buf = await getClip(key);
+  if (!ctx || !buf) return;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start();
+}
+
+async function clearClip(key) {
+  delete clipRaw[key];
+  delete clipBuffers[key];
+  await dbOp('readwrite', st => st.delete(key));
+  setRecStatus(key);
+}
+
+function buildRecorder() {
+  const list = document.getElementById('recorderList');
+  if (!list) return;
+  list.innerHTML = '';
+  phonicsKeys.forEach(key => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:8px 0; border-bottom:1px solid #eee; text-align:left;';
+    row.innerHTML =
+      `<strong style="font-size:1.3em;">/${key}/</strong> <span style="color:#666;">${phonicsHints[key]}</span><br>` +
+      `<button id="recBtn_${key}" onclick="toggleRecord('${key}')">🎙️ Record / 录音</button>` +
+      `<button id="recPlay_${key}" onclick="previewClip('${key}')" style="display:none;">▶ Play / 播放</button>` +
+      `<button id="recDl_${key}" onclick="downloadClip('${key}')" style="display:none;">⬇ Download / 下载</button>` +
+      `<button id="recClear_${key}" class="secondary" onclick="clearClip('${key}')" style="display:none;">✕ Clear / 清除</button>` +
+      `<span id="recStatus_${key}" style="font-size:0.9em; margin-left:6px;"></span>`;
+    list.appendChild(row);
+    setRecStatus(key);
+  });
+}
+
+async function loadSavedClips() {
+  phonicsDB = await openPhonicsDB();
+  await loadRepoClips();
+  for (const key of phonicsKeys) {
+    const val = await dbOp('readonly', st => st.get(key));
+    if (val && val !== true) clipRaw[key] = val;
+  }
+  buildRecorder();
+}
+loadSavedClips();
 
 function playSounds() {
   if (isSpeakingSounds) return;
@@ -594,7 +1013,37 @@ function showHeartWord() {
   document.getElementById('heartFeedback').textContent = '';
   document.getElementById('heartInput').value = '';
   // Speak the heart word when it appears
-  speak(heartWords[heartIndex]);
+  speakHeartWord(heartWords[heartIndex]);
+}
+
+// Say the heart word as a WORD sound (not letter names), exactly once.
+// Spelled-out phonetic versions stop the voice from saying "ay" / "A-S".
+const heartSpoken = {
+  'a':   'uh',
+  'as':  'az',
+  'the': 'thuh',
+  'is':  'iz',
+  'and': 'and'
+};
+let heartSpeakTimer = null;
+function speakHeartWord(word) {
+  if (!('speechSynthesis' in window)) return;
+  clearTimeout(heartSpeakTimer);
+  speechSynthesis.cancel();
+  // Short delay after cancel() prevents browsers from repeating/queuing the word
+  heartSpeakTimer = setTimeout(() => {
+    const utter = new SpeechSynthesisUtterance(heartSpoken[word.toLowerCase()] || word);
+    utter.rate = 0.6;
+    utter.pitch = 1.0;
+    utter.lang = 'en-US';
+    const voices = speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      v.lang.startsWith('en') &&
+      (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Alex'))
+    );
+    if (preferred) utter.voice = preferred;
+    speechSynthesis.speak(utter);
+  }, 120);
 }
 
 function coverHeart() {
@@ -794,17 +1243,6 @@ function speakWord(el) {
     el.style.color = '';
   }, 500);
   speak(word, speechRate);
-}
-
-function nextSentence() {
-  sentIndex = (sentIndex + 1) % sentences.length;
-  document.getElementById('sentenceText').textContent = sentences[sentIndex];
-  // Speak the sentence
-  const cleanSentence = sentences[sentIndex].replace(/^\d+\.\s*/, '');
-  speak(cleanSentence, speechRate);
-  updateStars(1);
-  // Clear canvas for new sentence
-  clearCanvas();
 }
 
 // ===== DRAWING CANVAS =====
