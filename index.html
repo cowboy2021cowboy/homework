@@ -393,39 +393,67 @@ function updateStars(amount = 1) {
 }
 
 function playRewardSound() {
+  // Try Web Audio first
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
     const now = ctx.currentTime;
-    // Cheerful rising notes
     [523, 659, 784, 1046].forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4 + i * 0.08);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45 + i * 0.1);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.start(now + i * 0.08);
-      osc.stop(now + 0.5 + i * 0.08);
+      osc.start(now + i * 0.1);
+      osc.stop(now + 0.55 + i * 0.1);
     });
   } catch (e) {
-    // fallback if audio blocked
+    // Fallback to speech if audio fails
+    speak('Great job!', 1.1);
   }
 }
 
 function reward() {
   playRewardSound();
-  // Visual burst of stars
+  // Big star burst
   const burst = document.createElement('div');
-  burst.innerHTML = '⭐✨🌟🎉⭐';
+  burst.innerHTML = '⭐✨🌟🎉⭐✨';
   burst.style.cssText = `
-    position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 3em; z-index: 9999; pointer-events: none;
-    animation: popReward 1.2s ease-out forwards;
+    position: fixed; top: 35%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 4em; z-index: 99999; pointer-events: none;
+    text-shadow: 0 0 10px #fff;
+    animation: popReward 1.5s ease-out forwards;
   `;
   document.body.appendChild(burst);
-  setTimeout(() => burst.remove(), 1200);
+  setTimeout(() => burst.remove(), 1500);
+
+  // Also flash the feedback
+  document.querySelectorAll('.feedback.correct').forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight; // reflow
+    el.style.animation = 'pulseCorrect 0.6s ease';
+  });
+}
+
+function wrongAnswer() {
+  // Shake + red flash
+  const flash = document.createElement('div');
+  flash.innerHTML = '😅 Try again!';
+  flash.style.cssText = `
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 2.2em; font-weight: bold; color: #e74c3c; z-index: 99999;
+    background: rgba(255,255,255,0.9); padding: 15px 25px; border-radius: 15px;
+    border: 3px solid #e74c3c; pointer-events: none;
+    animation: shakeWrong 0.6s ease;
+  `;
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 700);
 }
 
 function bigCelebrate() {
@@ -435,21 +463,33 @@ function bigCelebrate() {
   msg.style.cssText = `
     position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
     background: #fff; border: 4px solid #ffd93d; border-radius: 20px;
-    padding: 20px 30px; font-size: 1.4em; font-weight: bold; text-align: center;
-    z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    animation: popReward 2s ease-out forwards;
+    padding: 20px 30px; font-size: 1.5em; font-weight: bold; text-align: center;
+    z-index: 100000; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: popReward 2.2s ease-out forwards;
   `;
   document.body.appendChild(msg);
-  setTimeout(() => msg.remove(), 2000);
+  setTimeout(() => msg.remove(), 2200);
 }
 
-// Add the animation style
+// Animation styles
 const style = document.createElement('style');
 style.textContent = `
   @keyframes popReward {
-    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-    40% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -60%) scale(1); opacity: 0; }
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
+  }
+  @keyframes shakeWrong {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0); }
+    20% { transform: translate(-52%, -50%) rotate(-5deg); }
+    40% { transform: translate(-48%, -50%) rotate(5deg); }
+    60% { transform: translate(-52%, -50%) rotate(-3deg); }
+    80% { transform: translate(-48%, -50%) rotate(3deg); }
+  }
+  @keyframes pulseCorrect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
   }
 `;
 document.head.appendChild(style);
@@ -574,6 +614,7 @@ function checkHeart() {
   } else {
     fb.textContent = `Almost! The word is "${heartWords[heartIndex]}". Try again! / 差一点！单词是 "${heartWords[heartIndex]}"。再试一次！`;
     fb.className = 'feedback try-again';
+    wrongAnswer();
   }
 }
 
@@ -659,6 +700,7 @@ function checkChain() {
   } else {
     fb.textContent = `Try again! The word is "${step.answer}". / 再试一次！单词是 "${step.answer}"。`;
     fb.className = 'feedback try-again';
+    wrongAnswer();
   }
 }
 
@@ -904,6 +946,7 @@ function checkDictation() {
   } else {
     fb.textContent = `Close! The sentence is: "${target}" / 很接近！句子是："${target}"`;
     fb.className = 'feedback try-again';
+    wrongAnswer();
   }
 }
 
@@ -1009,6 +1052,7 @@ function checkShapes() {
   } else {
     fb.textContent = `Almost! ${q.ruleText}. / 差一点！请按题目要求涂色。`;
     fb.className = 'feedback try-again';
+    wrongAnswer();
   }
 }
 
