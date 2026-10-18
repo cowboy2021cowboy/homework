@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liam's Fun Homework Practice / 利亚姆的趣味作业练习 - October 13</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    margin: 0;
+    padding: 10px;
+    color: #333;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+  h1 {
+    text-align: center;
+    color: #ff6b6b;
+    font-size: 1.7em;
+    margin-bottom: 5px;
+    line-height: 1.3;
+  }
+  .subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+  }
+  .stars {
+    text-align: center;
+    font-size: 1.5em;
+    margin: 10px 0;
+    color: #ffd93d;
+  }
+  .activity {
+    display: none;
+    animation: fadeIn 0.4s;
+  }
+  .activity.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .card {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+    text-align: center;
+    border: 3px dashed #4ecdc4;
+  }
+  .big-word {
+    font-size: 3em;
+    font-weight: bold;
+    color: #ff6b6b;
+    margin: 20px 0;
+    min-height: 1.2em;
+  }
+  input[type="text"] {
+    font-size: 1.5em;
+    padding: 12px;
+    border: 3px solid #4ecdc4;
+    border-radius: 12px;
+    width: 80%;
+    text-align: center;
+    margin: 10px 0;
+  }
+  button {
+    background: #4ecdc4;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.05em;
+    border-radius: 12px;
+    cursor: pointer;
+    margin: 6px;
+    font-family: inherit;
+    font-weight: bold;
+    line-height: 1.3;
+  }
+  button:hover { background: #45b7aa; transform: scale(1.03); }
+  button.secondary { background: #ff6b6b; }
+  button.secondary:hover { background: #ee5a5a; }
+  .feedback {
+    font-size: 1.2em;
+    font-weight: bold;
+    min-height: 1.5em;
+    margin: 10px 0;
+  }
+  .correct { color: #2ecc71; }
+  .try-again { color: #e74c3c; }
+  .progress-bar {
+    height: 20px;
+    background: #eee;
+    border-radius: 10px;
+    margin: 15px 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ecdc4, #44a08d);
+    width: 0%;
+    transition: width 0.4s;
+  }
+  .nav-buttons { text-align: center; margin-top: 20px; }
+  .shape-demo {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .shape {
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .shape:hover { transform: scale(1.1); }
+  .circle { background: #ff6b6b; border-radius: 50%; }
+  .triangle {
+    width: 0; height: 0;
+    border-left: 40px solid transparent;
+    border-right: 40px solid transparent;
+    border-bottom: 80px solid #4ecdc4;
+  }
+  .square { background: #ffd93d; }
+  .word-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+  }
+  .word-chip {
+    background: #fff3cd;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 1.4em;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #ffc107;
+  }
+  .word-chip:hover { background: #ffeaa7; }
+  .sentence {
+    font-size: 1.5em;
+    line-height: 1.6;
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 10px 0;
+  }
+  .hidden { display: none; }
+  .zh {
+    color: #555;
+    font-size: 0.9em;
+    display: block;
+    margin-top: 4px;
+  }
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #888;
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🚀 Liam's Homework Adventure!<br>利亚姆的作业冒险！</h1>
+  <p class="subtitle">
+    Week of October 13 • Due October 16 • Let's practice and have fun!<br>
+    <span class="zh">10月13日这周 • 10月16日交 • 一起练习，开心学习！</span>
+  </p>
+  <div class="stars">⭐ <span id="starCount">0</span> Stars / 星星</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+  <!-- Welcome / Menu -->
+  <div class="activity active" id="menu">
+    <div class="card">
+      <h2>Choose an activity!<br><span class="zh">选择一个活动！</span></h2>
+      <button onclick="startActivity('heart')">💖 Heart Words<br><span class="zh">心形词（高频词）</span></button>
+      <button onclick="startActivity('reading')">📖 Reading Words<br><span class="zh">阅读单词</span></button>
+      <button onclick="startActivity('chain')">🔗 Word Chain<br><span class="zh">单词链</span></button>
+      <button onclick="startActivity('sentences')">📝 Sentences<br><span class="zh">句子</span></button>
+      <button onclick="startActivity('dictation')">✍️ Dictation<br><span class="zh">听写</span></button>
+      <button onclick="startActivity('shapes')">🔺 2-D Shapes<br><span class="zh">二维图形</span></button>
+    </div>
+  </div>
+
+  <!-- Heart Words -->
+  <div class="activity" id="heart">
+    <h2>💖 Heart Words Practice<br><span class="zh">心形词练习</span></h2>
+    <p>
+      Read the word, then cover it and write it from memory!<br>
+      <span class="zh">先读单词，然后遮住，凭记忆写出来！</span>
+    </p>
+    <div class="card">
+      <div class="big-word" id="heartWord">the</div>
+      <button onclick="coverHeart()">Cover & Practice<br><span class="zh">遮住并练习</span></button>
+      <div id="heartInputArea" class="hidden">
+        <input type="text" id="heartInput" placeholder="Type the word... 输入单词..." autocomplete="off">
+        <br>
+        <button onclick="checkHeart()">Check!<br><span class="zh">检查！</span></button>
+      </div>
+      <div class="feedback" id="heartFeedback"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+      <button onclick="nextHeart()">Next Word →<br><span class="zh">下一个单词</span></button>
+    </div>
+  </div>
+
+  <!-- Reading Words -->
+  <div class="activity" id="reading">
+    <h2>📖 Reading Words - Blend the Sounds!<br><span class="zh">阅读单词 - 拼读声音！</span></h2>
+    <p>
+      Tap the sounds, then blend them together.<br>
+      <span class="zh">点一下声音，然后把它们拼在一起。</span>
+    </p>
+    <div class="card">
+      <div class="big-word" id="readWord">am</div>
+      <div id="sounds" style="font-size:1.8em; margin:15px 0;"></div>
+      <button onclick="playSounds()">🔊 Say the Sounds<br><span class="zh">说出声音</span></button>
+      <button onclick="blendWord()">Blend the Word!<br><span class="zh">拼读单词！</span></button>
+      <div class="feedback" id="readFeedback"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+      <button onclick="nextReading()">Next Word →<br><span class="zh">下一个单词</span></button>
+    </div>
+  </div>
+
+  <!-- Word Chain -->
+  <div class="activity" id="chain">
+    <h2>🔗 Word Chain Activity<br><span class="zh">单词链活动</span></h2>
+    <p>
+      Start with Sam and follow the changes!<br>
+      <span class="zh">从 Sam 开始，跟着变化！</span>
+    </p>
+    <div class="card">
+      <div class="big-word" id="chainWord">Sam</div>
+      <p id="chainPrompt">Change the S to a T. What word do you have now?<br><span class="zh">把 S 改成 T。现在是什么单词？</span></p>
+      <input type="text" id="chainInput" placeholder="Type the new word... 输入新单词..." autocomplete="off">
+      <br>
+      <button onclick="checkChain()">Check!<br><span class="zh">检查！</span></button>
+      <div class="feedback" id="chainFeedback"></div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+      <button onclick="resetChain()">Restart Chain<br><span class="zh">重新开始</span></button>
+    </div>
+  </div>
+
+  <!-- Sentences -->
+  <div class="activity" id="sentences">
+    <h2>📝 Sentence Reading<br><span class="zh">句子阅读</span></h2>
+    <p>
+      Read the sentences out loud, then draw a picture of what you read!<br>
+      <span class="zh">大声读句子，然后画出所读内容的图画！</span>
+    </p>
+    <div class="card">
+      <div class="sentence" id="sentenceText">1. I sit at the fan.</div>
+      <div id="samplePicture" style="margin:15px 0; text-align:center;"></div>
+      <p style="font-size:0.95em; color:#666;">Sample picture idea / 示例图画想法</p>
+      <div style="margin:10px 0;">
+        <label>Reading speed / 阅读速度: <span id="speedLabel">Normal</span></label><br>
+        <input type="range" id="speedSlider" min="0.4" max="1.2" step="0.1" value="0.7" oninput="updateSpeed()" style="width:80%;">
+      </div>
+      <button onclick="readCurrentSentence()">🔊 Read Sentence<br><span class="zh">读句子</span></button>
+      <button onclick="nextSentence()">Next Sentence<br><span class="zh">下一个句子</span></button>
+      <div style="margin-top:20px;">
+        <p>Tap a word to hear it / 点单词听发音:</p>
+        <div class="word-list">
+          <span class="word-chip" onclick="speakWord(this)">I</span>
+          <span class="word-chip" onclick="speakWord(this)">sit</span>
+          <span class="word-chip" onclick="speakWord(this)">at</span>
+          <span class="word-chip" onclick="speakWord(this)">the</span>
+          <span class="word-chip" onclick="speakWord(this)">fan</span>
+          <span class="word-chip" onclick="speakWord(this)">Sam</span>
+          <span class="word-chip" onclick="speakWord(this)">and</span>
+          <span class="word-chip" onclick="speakWord(this)">Tam</span>
+          <span class="word-chip" onclick="speakWord(this)">tip</span>
+          <span class="word-chip" onclick="speakWord(this)">pan</span>
+        </div>
+      </div>
+
+      <h3 style="margin-top:25px;">Draw your picture here! / 在这里画画！</h3>
+      <canvas id="drawCanvas" width="600" height="300" style="border:3px solid #4ecdc4; border-radius:12px; background:#fff; max-width:100%; touch-action:none;"></canvas>
+      <br>
+      <button onclick="setDrawColor('#000000')">Black / 黑色</button>
+      <button onclick="setDrawColor('#ff6b6b')">Red / 红色</button>
+      <button onclick="setDrawColor('#4ecdc4')">Blue / 蓝色</button>
+      <button onclick="setDrawColor('#ffd93d')">Yellow / 黄色</button>
+      <button onclick="clearCanvas()" class="secondary">Clear / 清除</button>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+    </div>
+  </div>
+
+  <!-- Dictation -->
+  <div class="activity" id="dictation">
+    <h2>✍️ Dictation Practice<br><span class="zh">听写练习</span></h2>
+    <p>
+      Listen carefully (or read the sentence), then write it yourself. Remember CAPS!<br>
+      <span class="zh">仔细听（或读句子），然后自己写。记得大写！</span>
+    </p>
+    <div class="card">
+      <div class="sentence" id="dictationSentence">1. I tap the pan.</div>
+      <div style="margin:10px 0;">
+        <label>Reading speed / 阅读速度: <span id="dictSpeedLabel">Normal</span></label><br>
+        <input type="range" id="dictSpeedSlider" min="0.4" max="1.2" step="0.1" value="0.7" oninput="updateDictSpeed()" style="width:80%;">
+      </div>
+      <button onclick="replayDictation()">🔊 Listen Again<br><span class="zh">再听一次</span></button>
+      <div style="margin:15px 0;">
+        <p>Tap a word to hear it / 点单词听发音:</p>
+        <div class="word-list" id="dictWordList">
+          <!-- words filled by JS -->
+        </div>
+      </div>
+      <input type="text" id="dictationInput" placeholder="Write the sentence... 写下句子..." autocomplete="off" style="width:90%;">
+      <br>
+      <button onclick="checkDictation()">Check My Writing!<br><span class="zh">检查我的书写！</span></button>
+      <div class="feedback" id="dictationFeedback"></div>
+      <button onclick="nextDictation()" class="secondary">Next Sentence<br><span class="zh">下一个句子</span></button>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+    </div>
+  </div>
+
+  <!-- Shapes -->
+  <div class="activity" id="shapes">
+    <h2>🔺 Fishing for 2-D Figures<br><span class="zh">钓二维图形</span></h2>
+    <p>
+      Color the shapes! Triangles = blue, circles = red, other shapes = yellow.<br>
+      <span class="zh">给图形涂色！三角形=蓝色，圆形=红色，其他图形=黄色。</span>
+    </p>
+    <p id="shapeQuestionNum" style="text-align:center; font-weight:bold;">Question 1 of 5</p>
+    
+    <div style="text-align:center; margin:15px 0;">
+      <p><strong>Pick a color / 选择颜色：</strong></p>
+      <button onclick="setFillColor('blue')" style="background:#1e90ff; padding:15px 25px;">Blue / 蓝色</button>
+      <button onclick="setFillColor('red')" style="background:#ff6b6b; padding:15px 25px;">Red / 红色</button>
+      <button onclick="setFillColor('yellow')" style="background:#ffd93d; color:#333; padding:15px 25px;">Yellow / 黄色</button>
+      <p id="currentColor" style="font-weight:bold; margin-top:10px;">Current color: Blue / 当前颜色：蓝色</p>
+    </div>
+
+    <div class="shape-demo" id="shapesContainer" style="gap:30px; flex-wrap:wrap; justify-content:center;">
+      <!-- shapes filled by JS -->
+    </div>
+
+    <div class="card">
+      <p>Tap a color, then tap a shape to fill it!<br>
+      <span class="zh">先点颜色，再点图形来涂色！</span></p>
+      <button onclick="checkShapes()">Check My Coloring!<br><span class="zh">检查我的涂色！</span></button>
+      <div class="feedback" id="shapeFeedback"></div>
+      <button onclick="resetCurrentShapes()" class="secondary">Reset / 重置</button>
+      <button onclick="nextShapeQuestion()">Next Question →<br><span class="zh">下一题</span></button>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+    </div>
+  </div>
+
+  <footer>
+    Great job practicing, Liam! 🌟<br>
+    <span class="zh">利亚姆，练习得很棒！🌟</span><br>
+    Keep going — you're doing amazing!<br>
+    <span class="zh">继续加油 — 你做得非常棒！</span>
+  </footer>
+</div>
+
+<script>
+let stars = 0;
+let progress = 0;
+const maxProgress = 100;
+
+function updateStars(amount = 1) {
+  stars += amount;
+  document.getElementById('starCount').textContent = stars;
+  progress = Math.min(progress + 8, maxProgress);
+  document.getElementById('progressFill').style.width = progress + '%';
+  if (stars % 5 === 0) celebrate();
+}
+
+function celebrate() {
+  alert('🎉 Awesome! You earned more stars! / 太棒了！你又得到星星了！🎉');
+}
+
+function showMenu() {
+  document.querySelectorAll('.activity').forEach(el => el.classList.remove('active'));
+  document.getElementById('menu').classList.add('active');
+}
+
+function startActivity(id) {
+  document.querySelectorAll('.activity').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'heart') initHeart();
+  if (id === 'reading') initReading();
+  if (id === 'chain') resetChain();
+  if (id === 'sentences') {
+    initSentences();
+    setTimeout(initCanvas, 50);
+  }
+  if (id === 'dictation') initDictation();
+  if (id === 'shapes') initShapes();
+}
+
+// ===== HEART WORDS =====
+const heartWords = ['a', 'as', 'the', 'is', 'and'];
+let heartIndex = 0;
+
+function initHeart() {
+  heartIndex = 0;
+  showHeartWord();
+}
+
+// Helper to speak text aloud (improved)
+function speak(text, rate = 0.7) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = rate;
+  utter.pitch = 1.0;
+  utter.lang = 'en-US';
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => 
+    v.lang.startsWith('en') && 
+    (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Alex'))
+  );
+  if (preferred) utter.voice = preferred;
+  speechSynthesis.speak(utter);
+}
+
+// Speak a list of sounds one by one, clearly, waiting for each to finish
+let soundQueue = [];
+let isSpeakingSounds = false;
+
+function speakSoundsSequentially(sounds) {
+  speechSynthesis.cancel();
+  soundQueue = [...sounds];
+  isSpeakingSounds = true;
+  speakNextSound();
+}
+
+function speakNextSound() {
+  if (soundQueue.length === 0) {
+    isSpeakingSounds = false;
+    return;
+  }
+  const sound = soundQueue.shift();
+  const soundMap = {
+    '/a/': 'ah',
+    '/m/': 'mmmm',
+    '/t/': 'tuh',
+    '/n/': 'nnnn',
+    '/S/': 'sss',
+    '/s/': 'sss'
+  };
+  const spoken = soundMap[sound] || 'sound';
+
+  const utter = new SpeechSynthesisUtterance(spoken);
+  utter.rate = 0.5;
+  utter.pitch = 1.0;
+  utter.lang = 'en-US';
+  utter.onend = () => {
+    setTimeout(speakNextSound, 300); // small pause between sounds
+  };
+  utter.onerror = () => {
+    setTimeout(speakNextSound, 300);
+  };
+  speechSynthesis.speak(utter);
+}
+
+function playSounds() {
+  if (isSpeakingSounds) return; // prevent double-tap
+  const current = readingWords[readIndex];
+  document.getElementById('readFeedback').textContent = 'Say the sounds: ' + current.sounds.join(' ... ') + ' / 说出声音：' + current.sounds.join(' ... ');
+  document.getElementById('readFeedback').className = 'feedback';
+  speakSoundsSequentially(current.sounds);
+}
+
+function showHeartWord() {
+  document.getElementById('heartWord').textContent = heartWords[heartIndex];
+  document.getElementById('heartInputArea').classList.add('hidden');
+  document.getElementById('heartFeedback').textContent = '';
+  document.getElementById('heartInput').value = '';
+  // Speak the heart word when it appears
+  speak(heartWords[heartIndex]);
+}
+
+function coverHeart() {
+  document.getElementById('heartWord').textContent = '???';
+  document.getElementById('heartInputArea').classList.remove('hidden');
+  document.getElementById('heartInput').focus();
+}
+
+function checkHeart() {
+  const input = document.getElementById('heartInput').value.trim().toLowerCase();
+  const target = heartWords[heartIndex].toLowerCase();
+  const fb = document.getElementById('heartFeedback');
+  if (input === target) {
+    fb.textContent = '🌟 Perfect! You know it by heart! / 完美！你记住了！';
+    fb.className = 'feedback correct';
+    updateStars(1);
+  } else {
+    fb.textContent = `Almost! The word is "${heartWords[heartIndex]}". Try again! / 差一点！单词是 "${heartWords[heartIndex]}"。再试一次！`;
+    fb.className = 'feedback try-again';
+  }
+}
+
+function nextHeart() {
+  heartIndex = (heartIndex + 1) % heartWords.length;
+  showHeartWord();
+}
+
+// ===== READING WORDS =====
+const readingWords = [
+  { word: 'am', sounds: ['/a/', '/m/'] },
+  { word: 'tan', sounds: ['/t/', '/a/', '/n/'] },
+  { word: 'man', sounds: ['/m/', '/a/', '/n/'] },
+  { word: 'Sam', sounds: ['/S/', '/a/', '/m/'] }
+];
+let readIndex = 0;
+
+function initReading() {
+  readIndex = 0;
+  showReading();
+}
+
+function showReading() {
+  const current = readingWords[readIndex];
+  document.getElementById('readWord').textContent = current.word;
+  document.getElementById('sounds').textContent = current.sounds.join('   ');
+  document.getElementById('readFeedback').textContent = '';
+}
+
+function playSounds() {
+  if (isSpeakingSounds) return; // prevent double-tap
+  const current = readingWords[readIndex];
+  document.getElementById('readFeedback').textContent = 'Say the sounds: ' + current.sounds.join(' ... ') + ' / 说出声音：' + current.sounds.join(' ... ');
+  document.getElementById('readFeedback').className = 'feedback';
+  speakSoundsSequentially(current.sounds);
+}
+
+function blendWord() {
+  const current = readingWords[readIndex];
+  document.getElementById('readFeedback').textContent = `Blend: ${current.word}! Great reading! / 拼读：${current.word}！读得很棒！`;
+  document.getElementById('readFeedback').className = 'feedback correct';
+  speak(current.word, 0.8);
+  updateStars(1);
+}
+
+function nextReading() {
+  readIndex = (readIndex + 1) % readingWords.length;
+  showReading();
+}
+
+// ===== WORD CHAIN =====
+const chainSteps = [
+  { word: 'Sam', prompt: 'Change the S to a T. What word do you have now?<br><span class="zh">把 S 改成 T。现在是什么单词？</span>', answer: 'Tam' },
+  { word: 'Tam', prompt: 'Now change Tam to am.<br><span class="zh">现在把 Tam 改成 am。</span>', answer: 'am' },
+  { word: 'am', prompt: 'Now change the m to a n. What word do you have now?<br><span class="zh">现在把 m 改成 n。现在是什么单词？</span>', answer: 'an' },
+  { word: 'an', prompt: 'You finished the chain! Great job!<br><span class="zh">你完成单词链了！太棒了！</span>', answer: '' }
+];
+let chainStep = 0;
+
+function resetChain() {
+  chainStep = 0;
+  showChain();
+}
+
+function showChain() {
+  const step = chainSteps[chainStep];
+  document.getElementById('chainWord').textContent = step.word;
+  document.getElementById('chainPrompt').innerHTML = step.prompt;
+  document.getElementById('chainInput').value = '';
+  document.getElementById('chainFeedback').textContent = '';
+  if (!step.answer) {
+    document.getElementById('chainInput').style.display = 'none';
+  } else {
+    document.getElementById('chainInput').style.display = 'inline-block';
+  }
+}
+
+function checkChain() {
+  const step = chainSteps[chainStep];
+  if (!step.answer) return;
+  const input = document.getElementById('chainInput').value.trim();
+  const fb = document.getElementById('chainFeedback');
+  if (input.toLowerCase() === step.answer.toLowerCase()) {
+    fb.textContent = '🌟 Correct! / 正确！';
+    fb.className = 'feedback correct';
+    updateStars(2);
+    setTimeout(() => {
+      chainStep++;
+      if (chainStep < chainSteps.length) showChain();
+    }, 800);
+  } else {
+    fb.textContent = `Try again! The word is "${step.answer}". / 再试一次！单词是 "${step.answer}"。`;
+    fb.className = 'feedback try-again';
+  }
+}
+
+// ===== SENTENCES =====
+const sentences = [
+  {
+    en: '1. I sit at the fan.',
+    zh: '我坐在风扇旁边。',
+    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#f0f8ff;">
+      <!-- Fan -->
+      <circle cx="220" cy="100" r="40" fill="#ddd" stroke="#333" stroke-width="2"/>
+      <line x1="220" y1="60" x2="220" y2="140" stroke="#333" stroke-width="3"/>
+      <line x1="180" y1="100" x2="260" y2="100" stroke="#333" stroke-width="3"/>
+      <line x1="192" y1="72" x2="248" y2="128" stroke="#333" stroke-width="3"/>
+      <line x1="248" y1="72" x2="192" y2="128" stroke="#333" stroke-width="3"/>
+      <!-- Person sitting -->
+      <circle cx="80" cy="90" r="20" fill="#ffccaa"/>
+      <rect x="65" y="110" width="30" height="40" fill="#4ecdc4" rx="5"/>
+      <line x1="70" y1="150" x2="60" y2="170" stroke="#333" stroke-width="3"/>
+      <line x1="90" y1="150" x2="100" y2="170" stroke="#333" stroke-width="3"/>
+      <text x="150" y="190" font-size="14" text-anchor="middle">I sit at the fan</text>
+    </svg>`
+  },
+  {
+    en: '2. Sam and Tam tip the pan.',
+    zh: '山姆和塔姆倾斜平底锅。',
+    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#fff8e1;">
+      <!-- Pan -->
+      <ellipse cx="150" cy="120" rx="50" ry="15" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+      <rect x="190" y="115" width="30" height="8" fill="#333"/>
+      <!-- Sam -->
+      <circle cx="80" cy="80" r="18" fill="#ffccaa"/>
+      <rect x="68" y="98" width="24" height="35" fill="#ff6b6b" rx="4"/>
+      <text x="80" y="70" font-size="12" text-anchor="middle">Sam</text>
+      <!-- Tam -->
+      <circle cx="220" cy="80" r="18" fill="#ffccaa"/>
+      <rect x="208" y="98" width="24" height="35" fill="#4ecdc4" rx="4"/>
+      <text x="220" y="70" font-size="12" text-anchor="middle">Tam</text>
+      <!-- Tipping hands -->
+      <line x1="95" y1="110" x2="120" y2="115" stroke="#333" stroke-width="3"/>
+      <line x1="205" y1="110" x2="180" y2="115" stroke="#333" stroke-width="3"/>
+      <text x="150" y="190" font-size="14" text-anchor="middle">Sam and Tam tip the pan</text>
+    </svg>`
+  }
+];
+let sentIndex = 0;
+
+function initSentences() {
+  sentIndex = 0;
+  showSentence();
+  setTimeout(() => speak(sentences[0].en.replace(/^\d+\.\s*/, ''), speechRate), 300);
+}
+
+function showSentence() {
+  const s = sentences[sentIndex];
+  document.getElementById('sentenceText').innerHTML = s.en + '<br><span class="zh">' + s.zh + '</span>';
+  document.getElementById('samplePicture').innerHTML = s.sample;
+}
+
+function nextSentence() {
+  sentIndex = (sentIndex + 1) % sentences.length;
+  showSentence();
+  const cleanSentence = sentences[sentIndex].en.replace(/^\d+\.\s*/, '');
+  speak(cleanSentence, speechRate);
+  updateStars(1);
+  clearCanvas();
+}
+
+let speechRate = 0.7;
+
+function updateSpeed() {
+  const slider = document.getElementById('speedSlider');
+  speechRate = parseFloat(slider.value);
+  const label = document.getElementById('speedLabel');
+  if (speechRate <= 0.5) label.textContent = 'Slow / 慢';
+  else if (speechRate <= 0.8) label.textContent = 'Normal / 正常';
+  else label.textContent = 'Fast / 快';
+}
+
+function readCurrentSentence() {
+  const text = sentences[sentIndex].en.replace(/^\d+\.\s*/, '');
+  speak(text, speechRate);
+}
+
+function speakWord(el) {
+  const word = el.textContent;
+  el.style.background = '#4ecdc4';
+  el.style.color = 'white';
+  setTimeout(() => {
+    el.style.background = '';
+    el.style.color = '';
+  }, 500);
+  speak(word, speechRate);
+}
+
+function nextSentence() {
+  sentIndex = (sentIndex + 1) % sentences.length;
+  document.getElementById('sentenceText').textContent = sentences[sentIndex];
+  // Speak the sentence
+  const cleanSentence = sentences[sentIndex].replace(/^\d+\.\s*/, '');
+  speak(cleanSentence, speechRate);
+  updateStars(1);
+  // Clear canvas for new sentence
+  clearCanvas();
+}
+
+// ===== DRAWING CANVAS =====
+let isDrawing = false;
+let drawColor = '#000000';
+let canvas, ctx;
+
+function initCanvas() {
+  canvas = document.getElementById('drawCanvas');
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = drawColor;
+
+  // Mouse events
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('mouseout', stopDraw);
+
+  // Touch events
+  canvas.addEventListener('touchstart', startDraw, {passive: false});
+  canvas.addEventListener('touchmove', draw, {passive: false});
+  canvas.addEventListener('touchend', stopDraw);
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  if (e.touches) {
+    return {
+      x: (e.touches[0].clientX - rect.left) * scaleX,
+      y: (e.touches[0].clientY - rect.top) * scaleY
+    };
+  }
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+function startDraw(e) {
+  e.preventDefault();
+  isDrawing = true;
+  const pos = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+}
+
+function stopDraw() {
+  isDrawing = false;
+}
+
+function setDrawColor(color) {
+  drawColor = color;
+  if (ctx) ctx.strokeStyle = color;
+}
+
+function clearCanvas() {
+  if (ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+// Initialize canvas when page loads or when switching to sentences
+document.addEventListener('DOMContentLoaded', initCanvas);
+setTimeout(initCanvas, 100);
+
+// ===== DICTATION =====
+const dictationSentences = [
+  'I tap the pan.',
+  'I sat at the tan map.'
+];
+let dictIndex = 0;
+
+function initDictation() {
+  dictIndex = 0;
+  showDictation();
+}
+
+function updateDictSpeed() {
+  const slider = document.getElementById('dictSpeedSlider');
+  speechRate = parseFloat(slider.value);
+  const label = document.getElementById('dictSpeedLabel');
+  if (speechRate <= 0.5) label.textContent = 'Slow / 慢';
+  else if (speechRate <= 0.8) label.textContent = 'Normal / 正常';
+  else label.textContent = 'Fast / 快';
+  // also sync the other slider if present
+  const mainSlider = document.getElementById('speedSlider');
+  if (mainSlider) mainSlider.value = speechRate;
+}
+
+function showDictation() {
+  const sentence = dictationSentences[dictIndex];
+  document.getElementById('dictationSentence').textContent = (dictIndex + 1) + '. ' + sentence;
+  document.getElementById('dictationInput').value = '';
+  document.getElementById('dictationFeedback').textContent = '';
+
+  // Build word chips
+  const wordList = document.getElementById('dictWordList');
+  wordList.innerHTML = '';
+  sentence.replace(/[.,]/g, '').split(/\s+/).forEach(word => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip';
+    chip.textContent = word;
+    chip.onclick = () => speakWord(chip);
+    wordList.appendChild(chip);
+  });
+
+  // Speak the sentence
+  setTimeout(() => speak(sentence, speechRate), 400);
+}
+
+function replayDictation() {
+  const sentence = dictationSentences[dictIndex];
+  speak(sentence, speechRate);
+}
+
+function checkDictation() {
+  const input = document.getElementById('dictationInput').value.trim();
+  const target = dictationSentences[dictIndex];
+  const fb = document.getElementById('dictationFeedback');
+  const normalize = s => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (normalize(input) === normalize(target)) {
+    fb.textContent = '🌟 Excellent writing! Check your CAPS too! / 书写很棒！也检查一下大写！';
+    fb.className = 'feedback correct';
+    updateStars(2);
+  } else {
+    fb.textContent = `Close! The sentence is: "${target}" / 很接近！句子是："${target}"`;
+    fb.className = 'feedback try-again';
+  }
+}
+
+function nextDictation() {
+  dictIndex = (dictIndex + 1) % dictationSentences.length;
+  showDictation();
+}
+
+// ===== SHAPES COLORING (Multiple Questions) =====
+let currentFillColor = 'blue';
+let shapeQIndex = 0;
+
+const shapeQuestions = [
+  { shapes: ['circle', 'triangle', 'square'], label: 'Circle, Triangle, Square' },
+  { shapes: ['triangle', 'circle', 'triangle'], label: 'Two Triangles & Circle' },
+  { shapes: ['circle', 'square', 'circle'], label: 'Two Circles & Square' },
+  { shapes: ['square', 'triangle', 'square'], label: 'Two Squares & Triangle' },
+  { shapes: ['circle', 'triangle', 'square', 'circle'], label: 'Four Shapes' }
+];
+
+function setFillColor(color) {
+  currentFillColor = color;
+  const names = { blue: 'Blue / 蓝色', red: 'Red / 红色', yellow: 'Yellow / 黄色' };
+  document.getElementById('currentColor').textContent = 'Current color: ' + names[color];
+}
+
+function fillShape(el) {
+  const type = el.getAttribute('data-type');
+  el.setAttribute('data-color', currentFillColor);
+  if (type === 'triangle') {
+    el.style.borderBottomColor = currentFillColor;
+  } else {
+    el.style.background = currentFillColor;
+  }
+}
+
+function renderShapeQuestion() {
+  const q = shapeQuestions[shapeQIndex];
+  document.getElementById('shapeQuestionNum').textContent = `Question ${shapeQIndex + 1} of ${shapeQuestions.length}`;
+  const container = document.getElementById('shapesContainer');
+  container.innerHTML = '';
+
+  q.shapes.forEach((type, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.textAlign = 'center';
+    let shapeHtml = '';
+    if (type === 'triangle') {
+      shapeHtml = `<div class="shape triangle fillable" data-type="triangle" style="border-bottom-color:#ccc;" onclick="fillShape(this)"></div>`;
+    } else if (type === 'circle') {
+      shapeHtml = `<div class="shape circle fillable" data-type="circle" style="background:white; border:4px solid #333;" onclick="fillShape(this)"></div>`;
+    } else {
+      shapeHtml = `<div class="shape square fillable" data-type="square" style="background:white; border:4px solid #333;" onclick="fillShape(this)"></div>`;
+    }
+    const label = type === 'circle' ? 'Circle / 圆形' : type === 'triangle' ? 'Triangle / 三角形' : 'Square / 正方形';
+    wrapper.innerHTML = shapeHtml + `<p>${label}</p>`;
+    container.appendChild(wrapper);
+  });
+  document.getElementById('shapeFeedback').textContent = '';
+}
+
+function checkShapes() {
+  const shapes = document.querySelectorAll('.fillable');
+  const fb = document.getElementById('shapeFeedback');
+  let allCorrect = true;
+
+  shapes.forEach(el => {
+    const type = el.getAttribute('data-type');
+    const color = el.getAttribute('data-color');
+    const expected = type === 'circle' ? 'red' : type === 'triangle' ? 'blue' : 'yellow';
+    if (color !== expected) allCorrect = false;
+  });
+
+  if (allCorrect && shapes.length > 0) {
+    fb.textContent = '🌟 Perfect! All shapes colored correctly! / 完美！所有图形涂色正确！';
+    fb.className = 'feedback correct';
+    updateStars(2);
+  } else {
+    fb.textContent = 'Almost! Circles = red, triangles = blue, other shapes = yellow. / 差一点！圆形红色，三角形蓝色，其他黄色。';
+    fb.className = 'feedback try-again';
+  }
+}
+
+function resetCurrentShapes() {
+  document.querySelectorAll('.fillable').forEach(el => {
+    const type = el.getAttribute('data-type');
+    el.removeAttribute('data-color');
+    if (type === 'triangle') {
+      el.style.borderBottomColor = '#ccc';
+    } else {
+      el.style.background = 'white';
+    }
+  });
+  document.getElementById('shapeFeedback').textContent = '';
+}
+
+function nextShapeQuestion() {
+  shapeQIndex = (shapeQIndex + 1) % shapeQuestions.length;
+  renderShapeQuestion();
+}
+
+function initShapes() {
+  shapeQIndex = 0;
+  setFillColor('blue');
+  renderShapeQuestion();
+}
+
+// Make sure voices are loaded (helps on mobile)
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {};
+  // Trigger load
+  speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>
