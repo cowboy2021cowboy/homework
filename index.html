@@ -388,12 +388,71 @@ function updateStars(amount = 1) {
   document.getElementById('starCount').textContent = stars;
   progress = Math.min(progress + 8, maxProgress);
   document.getElementById('progressFill').style.width = progress + '%';
-  if (stars % 5 === 0) celebrate();
+  reward();  // always reward on correct
+  if (stars % 5 === 0) bigCelebrate();
 }
 
-function celebrate() {
-  alert('🎉 Awesome! You earned more stars! / 太棒了！你又得到星星了！🎉');
+function playRewardSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // Cheerful rising notes
+    [523, 659, 784, 1046].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4 + i * 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.08);
+      osc.stop(now + 0.5 + i * 0.08);
+    });
+  } catch (e) {
+    // fallback if audio blocked
+  }
 }
+
+function reward() {
+  playRewardSound();
+  // Visual burst of stars
+  const burst = document.createElement('div');
+  burst.innerHTML = '⭐✨🌟🎉⭐';
+  burst.style.cssText = `
+    position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 3em; z-index: 9999; pointer-events: none;
+    animation: popReward 1.2s ease-out forwards;
+  `;
+  document.body.appendChild(burst);
+  setTimeout(() => burst.remove(), 1200);
+}
+
+function bigCelebrate() {
+  playRewardSound();
+  const msg = document.createElement('div');
+  msg.innerHTML = '🎉 Awesome! More stars! / 太棒了！🌟';
+  msg.style.cssText = `
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+    background: #fff; border: 4px solid #ffd93d; border-radius: 20px;
+    padding: 20px 30px; font-size: 1.4em; font-weight: bold; text-align: center;
+    z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: popReward 2s ease-out forwards;
+  `;
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 2000);
+}
+
+// Add the animation style
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes popReward {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+    40% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -60%) scale(1); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
 
 function showMenu() {
   document.querySelectorAll('.activity').forEach(el => el.classList.remove('active'));
@@ -457,31 +516,32 @@ function speakNextSound() {
     return;
   }
   const sound = soundQueue.shift();
+  // Better approximations that TTS pronounces as sounds, not letter names
   const soundMap = {
     '/a/': 'ah',
-    '/m/': 'mmmm',
+    '/m/': 'mmm',
     '/t/': 'tuh',
-    '/n/': 'nnnn',
+    '/n/': 'nnn',
     '/S/': 'sss',
     '/s/': 'sss'
   };
-  const spoken = soundMap[sound] || 'sound';
+  const spoken = soundMap[sound] || sound.replace(/[/]/g, '');
 
   const utter = new SpeechSynthesisUtterance(spoken);
-  utter.rate = 0.5;
+  utter.rate = 0.45;          // slower for clear sound
   utter.pitch = 1.0;
   utter.lang = 'en-US';
   utter.onend = () => {
-    setTimeout(speakNextSound, 300); // small pause between sounds
+    setTimeout(speakNextSound, 400);
   };
   utter.onerror = () => {
-    setTimeout(speakNextSound, 300);
+    setTimeout(speakNextSound, 400);
   };
   speechSynthesis.speak(utter);
 }
 
 function playSounds() {
-  if (isSpeakingSounds) return; // prevent double-tap
+  if (isSpeakingSounds) return;
   const current = readingWords[readIndex];
   document.getElementById('readFeedback').textContent = 'Say the sounds: ' + current.sounds.join(' ... ') + ' / 说出声音：' + current.sounds.join(' ... ');
   document.getElementById('readFeedback').className = 'feedback';
@@ -541,14 +601,6 @@ function showReading() {
   document.getElementById('readWord').textContent = current.word;
   document.getElementById('sounds').textContent = current.sounds.join('   ');
   document.getElementById('readFeedback').textContent = '';
-}
-
-function playSounds() {
-  if (isSpeakingSounds) return; // prevent double-tap
-  const current = readingWords[readIndex];
-  document.getElementById('readFeedback').textContent = 'Say the sounds: ' + current.sounds.join(' ... ') + ' / 说出声音：' + current.sounds.join(' ... ');
-  document.getElementById('readFeedback').className = 'feedback';
-  speakSoundsSequentially(current.sounds);
 }
 
 function blendWord() {
@@ -865,11 +917,31 @@ let currentFillColor = 'blue';
 let shapeQIndex = 0;
 
 const shapeQuestions = [
-  { shapes: ['circle', 'triangle', 'square'], label: 'Circle, Triangle, Square' },
-  { shapes: ['triangle', 'circle', 'triangle'], label: 'Two Triangles & Circle' },
-  { shapes: ['circle', 'square', 'circle'], label: 'Two Circles & Square' },
-  { shapes: ['square', 'triangle', 'square'], label: 'Two Squares & Triangle' },
-  { shapes: ['circle', 'triangle', 'square', 'circle'], label: 'Four Shapes' }
+  { 
+    shapes: ['circle', 'triangle', 'square'], 
+    rule: { circle: 'red', triangle: 'blue', square: 'yellow' },
+    ruleText: 'Circles = red, triangles = blue, squares = yellow'
+  },
+  { 
+    shapes: ['triangle', 'circle', 'triangle'], 
+    rule: { circle: 'yellow', triangle: 'red', square: 'blue' },
+    ruleText: 'Triangles = red, circles = yellow'
+  },
+  { 
+    shapes: ['circle', 'square', 'circle'], 
+    rule: { circle: 'blue', triangle: 'yellow', square: 'red' },
+    ruleText: 'Circles = blue, squares = red'
+  },
+  { 
+    shapes: ['square', 'triangle', 'square'], 
+    rule: { circle: 'red', triangle: 'yellow', square: 'blue' },
+    ruleText: 'Squares = blue, triangles = yellow'
+  },
+  { 
+    shapes: ['circle', 'triangle', 'square', 'circle'], 
+    rule: { circle: 'yellow', triangle: 'blue', square: 'red' },
+    ruleText: 'Circles = yellow, triangles = blue, squares = red'
+  }
 ];
 
 function setFillColor(color) {
@@ -891,10 +963,15 @@ function fillShape(el) {
 function renderShapeQuestion() {
   const q = shapeQuestions[shapeQIndex];
   document.getElementById('shapeQuestionNum').textContent = `Question ${shapeQIndex + 1} of ${shapeQuestions.length}`;
+  // Update the rule instruction
+  const ruleP = document.querySelector('#shapes p');
+  if (ruleP) {
+    ruleP.innerHTML = `Color the shapes! ${q.ruleText}.<br><span class="zh">给图形涂色！按题目要求涂色。</span>`;
+  }
   const container = document.getElementById('shapesContainer');
   container.innerHTML = '';
 
-  q.shapes.forEach((type, i) => {
+  q.shapes.forEach((type) => {
     const wrapper = document.createElement('div');
     wrapper.style.textAlign = 'center';
     let shapeHtml = '';
@@ -913,6 +990,7 @@ function renderShapeQuestion() {
 }
 
 function checkShapes() {
+  const q = shapeQuestions[shapeQIndex];
   const shapes = document.querySelectorAll('.fillable');
   const fb = document.getElementById('shapeFeedback');
   let allCorrect = true;
@@ -920,7 +998,7 @@ function checkShapes() {
   shapes.forEach(el => {
     const type = el.getAttribute('data-type');
     const color = el.getAttribute('data-color');
-    const expected = type === 'circle' ? 'red' : type === 'triangle' ? 'blue' : 'yellow';
+    const expected = q.rule[type];
     if (color !== expected) allCorrect = false;
   });
 
@@ -929,7 +1007,7 @@ function checkShapes() {
     fb.className = 'feedback correct';
     updateStars(2);
   } else {
-    fb.textContent = 'Almost! Circles = red, triangles = blue, other shapes = yellow. / 差一点！圆形红色，三角形蓝色，其他黄色。';
+    fb.textContent = `Almost! ${q.ruleText}. / 差一点！请按题目要求涂色。`;
     fb.className = 'feedback try-again';
   }
 }
