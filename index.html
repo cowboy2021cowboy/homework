@@ -253,14 +253,22 @@
     text-align: center;
     animation: shakeWrong 0.7s ease;
   }
+  .k-item { stroke: #333; stroke-width: 2.5; cursor: pointer; }
+  .k-item:hover { stroke: #e67e22; }
+  .k-item.found { fill: #7be0a3 !important; stroke: #27ae60; }
+  .k-item.nope  { fill: #ff9f9a !important; stroke: #c0392b; }
+  .spot { fill: rgba(255,255,255,0.7); stroke: #e67e22; stroke-width: 3; stroke-dasharray: 7 5; cursor: pointer; }
+  .spot.filled { stroke: #333; stroke-dasharray: none; }
+  .shape-pick.selected { outline: 5px solid #ffd93d; transform: scale(1.06); }
+  .week-btn.selected { outline: 5px solid #ffd93d; transform: scale(1.05); }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>🚀 Liam's Homework Adventure!<br>利亚姆的作业冒险！</h1>
-  <p class="subtitle">
-    Week of October 13 • Due October 16 • Let's practice and have fun!<br>
-    <span class="zh">10月13日这周 • 10月16日交 • 一起练习，开心学习！</span>
+  <p class="subtitle" id="weekSubtitle">
+    Week of October 19 • Due October 23 • Let's practice and have fun!<br>
+    <span class="zh">10月19日这周 • 10月23日交 • 一起练习，开心学习！</span>
   </p>
   <div class="stars">⭐ <span id="starCount">0</span> Stars / 星星</div>
   <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -268,13 +276,20 @@
   <!-- Welcome / Menu -->
   <div class="activity active" id="menu">
     <div class="card">
+      <h3>📅 Choose a week / 选择周</h3>
+      <div style="margin-bottom:18px;">
+        <button class="week-btn" id="weekBtn_oct19" onclick="setWeek('oct19')">Oct 19 – 23<br><span class="zh">10月19日–23日</span></button>
+        <button class="week-btn" id="weekBtn_oct13" onclick="setWeek('oct13')">Oct 13 – 16<br><span class="zh">10月13日–16日</span></button>
+      </div>
       <h2>Choose an activity!<br><span class="zh">选择一个活动！</span></h2>
       <button onclick="startActivity('heart')">💖 Heart Words<br><span class="zh">心形词（高频词）</span></button>
       <button onclick="startActivity('reading')">📖 Reading Words<br><span class="zh">阅读单词</span></button>
       <button onclick="startActivity('chain')">🔗 Word Chain<br><span class="zh">单词链</span></button>
       <button onclick="startActivity('sentences')">📝 Sentences<br><span class="zh">句子</span></button>
       <button onclick="startActivity('dictation')">✍️ Dictation<br><span class="zh">听写</span></button>
-      <button onclick="startActivity('shapes')">🔺 2-D Shapes<br><span class="zh">二维图形</span></button>
+      <button data-week="oct13" onclick="startActivity('shapes')">🔺 2-D Shapes<br><span class="zh">二维图形</span></button>
+      <button data-week="oct19" onclick="startActivity('kitchen')">🍳 Rectangles in the Kitchen<br><span class="zh">厨房里的长方形</span></button>
+      <button data-week="oct19" onclick="startActivity('complete')">🖍️ Complete the Picture<br><span class="zh">完成图画</span></button>
     </div>
   </div>
 
@@ -318,7 +333,7 @@
     <details style="margin:15px 0; background:#f8f9fa; border-radius:12px; padding:12px 16px; border:2px solid #ffd93d;">
       <summary style="cursor:pointer; font-weight:bold;">🎙️ Parent: record real voice sounds<br><span class="zh">家长：录制真人发音</span></summary>
       <p style="font-size:0.95em;">
-        Record each sound in your own voice (about 1 second). Say only the <em>sound</em>, not the letter name. Recordings are saved on this device. To make them work on every device, tap <strong>Download all</strong> and upload the files (a.wav, m.wav, n.wav, s.wav, t.wav) to GitHub next to index.html (or in a folder named <strong>sounds</strong>).<br>
+        Record each sound in your own voice (about 1 second). Say only the <em>sound</em>, not the letter name. Recordings are saved on this device. To make them work on every device, tap <strong>Download all</strong> and upload the files (one per sound: a.wav, d.wav, f.wav ...) to GitHub next to index.html (or in a folder named <strong>sounds</strong>).<br>
         <span class="zh">用自己的声音录下每个发音（约1秒）。只读发音，不要读字母名称。录音保存在这台设备上；点“全部下载”，把文件上传到 GitHub 里 index.html 旁边（或 sounds 文件夹），所有设备都能使用。</span>
       </p>
       <div id="recorderList"></div>
@@ -359,9 +374,9 @@
       <span class="zh">大声读句子，然后画出所读内容的图画！</span>
     </p>
     <div class="card">
-      <div class="sentence" id="sentenceText">1. I sit at the fan.</div>
+      <div class="sentence" id="sentenceText">1. The pan did not pop.</div>
       <div id="samplePicture" style="margin:15px 0; text-align:center;"></div>
-      <p style="font-size:0.95em; color:#666;">Sample picture idea / 示例图画想法</p>
+      <p id="sampleCaption" style="font-size:0.95em; color:#666;">Sample picture idea / 示例图画想法</p>
       <div style="margin:10px 0;">
         <label>Reading speed / 阅读速度: <span id="speedLabel">Normal</span></label><br>
         <input type="range" id="speedSlider" min="0.4" max="1.2" step="0.1" value="0.7" oninput="updateSpeed()" style="width:80%;">
@@ -370,18 +385,7 @@
       <button onclick="nextSentence()">Next Sentence<br><span class="zh">下一个句子</span></button>
       <div style="margin-top:20px;">
         <p>Tap a word to hear it / 点单词听发音:</p>
-        <div class="word-list">
-          <span class="word-chip" onclick="speakWord(this)">I</span>
-          <span class="word-chip" onclick="speakWord(this)">sit</span>
-          <span class="word-chip" onclick="speakWord(this)">at</span>
-          <span class="word-chip" onclick="speakWord(this)">the</span>
-          <span class="word-chip" onclick="speakWord(this)">fan</span>
-          <span class="word-chip" onclick="speakWord(this)">Sam</span>
-          <span class="word-chip" onclick="speakWord(this)">and</span>
-          <span class="word-chip" onclick="speakWord(this)">Tam</span>
-          <span class="word-chip" onclick="speakWord(this)">tip</span>
-          <span class="word-chip" onclick="speakWord(this)">pan</span>
-        </div>
+        <div class="word-list" id="sentWordList"></div>
       </div>
 
       <h3 style="margin-top:25px;">Draw your picture here! / 在这里画画！</h3>
@@ -406,7 +410,7 @@
       <span class="zh">仔细听（或读句子），然后自己写。记得大写！</span>
     </p>
     <div class="card">
-      <div class="sentence" id="dictationSentence">1. I tap the pan.</div>
+      <div class="sentence" id="dictationSentence">1. Did Sam tap the map?</div>
       <div style="margin:10px 0;">
         <label>Reading speed / 阅读速度: <span id="dictSpeedLabel">Normal</span></label><br>
         <input type="range" id="dictSpeedSlider" min="0.4" max="1.2" step="0.1" value="0.7" oninput="updateDictSpeed()" style="width:80%;">
@@ -457,6 +461,82 @@
       <div class="feedback" id="shapeFeedback"></div>
       <button onclick="resetCurrentShapes()" class="secondary">Reset / 重置</button>
       <button onclick="nextShapeQuestion()">Next Question →<br><span class="zh">下一题</span></button>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+    </div>
+  </div>
+
+  <!-- Rectangles in the Kitchen -->
+  <div class="activity" id="kitchen">
+    <h2>🍳 Rectangles in the Kitchen<br><span class="zh">厨房里的长方形</span></h2>
+    <p>
+      Find and tap at least 6 things in the kitchen that are shaped like rectangles!<br>
+      <span class="zh">找一找，点出厨房里至少6个长方形的东西！</span>
+    </p>
+    <p id="kitchenCount" style="text-align:center; font-weight:bold; font-size:1.2em;"></p>
+    <div class="card" style="text-align:center;">
+      <svg id="kitchenSvg" viewBox="0 0 360 350" style="width:100%; max-width:480px; border:3px solid #4ecdc4; border-radius:12px; background:#fdf6e3;" onclick="kitchenClick(event)">
+        <rect x="0" y="335" width="360" height="15" fill="#e0d4b8"/>
+        <!-- upper cabinets -->
+        <rect class="k-item" data-rect="1" x="18" y="18" width="36" height="70" fill="#deb887"/>
+        <rect class="k-item" data-rect="1" x="56" y="18" width="36" height="70" fill="#deb887"/>
+        <!-- bulletin board -->
+        <rect class="k-item" data-rect="1" x="105" y="18" width="90" height="70" fill="#d2a679"/>
+        <rect class="k-item" data-rect="1" x="113" y="26" width="28" height="36" fill="#ffffff"/>
+        <rect class="k-item" data-rect="1" x="150" y="40" width="36" height="38" fill="#ffffff"/>
+        <!-- clock (round) -->
+        <circle class="k-item" data-rect="0" cx="222" cy="50" r="18" fill="#ffffff"/>
+        <!-- fridge -->
+        <rect class="k-item" data-rect="1" x="255" y="15" width="90" height="80" fill="#dfe6e9"/>
+        <rect class="k-item" data-rect="1" x="255" y="99" width="90" height="170" fill="#dfe6e9"/>
+        <!-- counter things -->
+        <rect class="k-item" data-rect="1" x="22" y="108" width="80" height="48" fill="#b2bec3"/>
+        <rect class="k-item" data-rect="1" x="30" y="114" width="44" height="34" fill="#2d3436"/>
+        <rect class="k-item" data-rect="1" x="128" y="104" width="32" height="52" fill="#74b9ff"/>
+        <rect class="k-item" data-rect="1" x="10" y="160" width="200" height="10" fill="#a0866a"/>
+        <!-- lower cabinets -->
+        <rect class="k-item" data-rect="1" x="14" y="172" width="48" height="78" fill="#deb887"/>
+        <rect class="k-item" data-rect="1" x="64" y="172" width="48" height="78" fill="#deb887"/>
+        <rect class="k-item" data-rect="1" x="114" y="172" width="48" height="78" fill="#deb887"/>
+        <rect class="k-item" data-rect="1" x="164" y="172" width="48" height="78" fill="#deb887"/>
+        <!-- table -->
+        <rect class="k-item" data-rect="1" x="80" y="305" width="8" height="40" fill="#8d6e4a"/>
+        <rect class="k-item" data-rect="1" x="272" y="305" width="8" height="40" fill="#8d6e4a"/>
+        <polygon class="k-item" data-rect="0" points="95,270 265,270 285,305 75,305" fill="#c49a6c"/>
+        <rect class="k-item" data-rect="1" x="108" y="276" width="52" height="22" fill="#ffffff"/>
+        <rect class="k-item" data-rect="1" x="200" y="276" width="52" height="22" fill="#ffffff"/>
+        <rect class="k-item" data-rect="1" x="158" y="250" width="34" height="46" fill="#ff9f43"/>
+        <ellipse class="k-item" data-rect="0" cx="134" cy="286" rx="14" ry="8" fill="#ffeaa7"/>
+        <ellipse class="k-item" data-rect="0" cx="226" cy="286" rx="14" ry="8" fill="#ffeaa7"/>
+      </svg>
+      <div class="feedback" id="kitchenFeedback"></div>
+      <button onclick="resetKitchen()" class="secondary">Start Over<br><span class="zh">重新开始</span></button>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
+    </div>
+  </div>
+
+  <!-- Complete the Picture -->
+  <div class="activity" id="complete">
+    <h2>🖍️ Complete the Picture<br><span class="zh">完成图画</span></h2>
+    <p>
+      Pick a shape, then tap the dotted spot where it belongs!<br>
+      <span class="zh">选一个图形，再点它该放的虚线位置！</span>
+    </p>
+    <p id="completeNum" style="text-align:center; font-weight:bold;"></p>
+    <div class="card" style="text-align:center;">
+      <div style="margin:10px 0;">
+        <button class="shape-pick" data-shape="triangle" onclick="pickShape('triangle')">🔺 Triangle<br><span class="zh">三角形</span></button>
+        <button class="shape-pick" data-shape="square" onclick="pickShape('square')">🟨 Square<br><span class="zh">正方形</span></button>
+        <button class="shape-pick" data-shape="rectangle" onclick="pickShape('rectangle')">▬ Rectangle<br><span class="zh">长方形</span></button>
+        <button class="shape-pick" data-shape="circle" onclick="pickShape('circle')">🔵 Circle<br><span class="zh">圆形</span></button>
+      </div>
+      <p id="completeSelected" style="font-weight:bold;"></p>
+      <div id="completeScene"></div>
+      <div class="feedback" id="completeFeedback"></div>
+      <button onclick="nextCompleteScene()">Next Picture →<br><span class="zh">下一幅图</span></button>
     </div>
     <div class="nav-buttons">
       <button onclick="showMenu()">← Back to Menu<br><span class="zh">返回菜单</span></button>
@@ -625,10 +705,12 @@ function startActivity(id) {
   }
   if (id === 'dictation') initDictation();
   if (id === 'shapes') initShapes();
+  if (id === 'kitchen') resetKitchen();
+  if (id === 'complete') initComplete();
 }
 
 // ===== HEART WORDS =====
-const heartWords = ['a', 'as', 'the', 'is', 'and'];
+let heartWords = ['the', 'I', 'a', 'is', 'as', 'and', 'said'];
 let heartIndex = 0;
 
 function initHeart() {
@@ -736,7 +818,88 @@ function burstT(ctx, t) {
   src.start(t); src.stop(t + 0.1);
 }
 
+// Generic vowel: pass the three formant frequencies
+function vowelF(ctx, t, dur, formants) {
+  const src = ctx.createOscillator();
+  src.type = 'sawtooth';
+  src.frequency.setValueAtTime(130, t);
+  src.frequency.linearRampToValueAtTime(115, t + dur);
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.9, t + 0.05);
+  out.gain.setValueAtTime(0.9, t + dur - 0.12);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  [[formants[0], 1.0, 8], [formants[1], 0.6, 10], [formants[2], 0.3, 12]].forEach(([f, g, q]) => {
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+    const gn = ctx.createGain(); gn.gain.value = g;
+    src.connect(bp); bp.connect(gn); gn.connect(out);
+  });
+  out.connect(ctx.destination);
+  src.start(t); src.stop(t + dur + 0.05);
+}
+
+// /f/: soft, airy hiss (lower and quieter than /s/)
+function softF(ctx, t, dur) {
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx, dur + 0.1);
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 1800;
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 7000;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.3, t + 0.08);
+  out.gain.setValueAtTime(0.3, t + dur - 0.12);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(hp); hp.connect(lp); lp.connect(out); out.connect(ctx.destination);
+  src.start(t); src.stop(t + dur + 0.1);
+}
+
+// /p/: a soft puff of air
+function burstP(ctx, t) {
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx, 0.1);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 1200; bp.Q.value = 0.7;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.9, t);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+  src.connect(bp); bp.connect(out); out.connect(ctx.destination);
+  src.start(t); src.stop(t + 0.1);
+}
+
+// /d/: a short voiced "thud" plus a tiny tongue tap
+function burstD(ctx, t) {
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(140, t);
+  osc.frequency.exponentialRampToValueAtTime(90, t + 0.12);
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 600;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.8, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+  osc.connect(lp); lp.connect(g); g.connect(ctx.destination);
+  osc.start(t); osc.stop(t + 0.18);
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx, 0.05);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 2500; bp.Q.value = 1;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.35, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+  src.connect(bp); bp.connect(ng); ng.connect(ctx.destination);
+  src.start(t); src.stop(t + 0.06);
+}
+
 const phonemePlayers = {
+  'o': (ctx, t) => { vowelF(ctx, t, 0.6, [730, 1090, 2440]);  return 0.6; },
+  'i': (ctx, t) => { vowelF(ctx, t, 0.6, [400, 1900, 2550]);  return 0.6; },
+  'f': (ctx, t) => { softF(ctx, t, 0.7);   return 0.7; },
+  'p': (ctx, t) => { burstP(ctx, t);       return 0.15; },
+  'd': (ctx, t) => { burstD(ctx, t);       return 0.2; },
   'a': (ctx, t) => { vowelA(ctx, t, 0.6);        return 0.6; },
   'm': (ctx, t) => { nasal(ctx, t, 0.7, 1100);   return 0.7; },
   'n': (ctx, t) => { nasal(ctx, t, 0.7, 1600);   return 0.7; },
@@ -772,13 +935,18 @@ async function speakSoundsSequentially(sounds) {
 }
 
 // ===== RECORD YOUR OWN VOICE FOR THE SOUNDS =====
-const phonicsKeys = ['a', 'm', 'n', 's', 't'];
+const phonicsKeys = ['a', 'o', 'i', 'm', 'n', 's', 't', 'd', 'f', 'p'];
 const phonicsHints = {
   a: 'short "a" as in cat (not "ay")',
   m: 'hum "mmm" (not "em")',
   n: 'hum "nnn" (not "en")',
   s: 'hiss "sss" (not "ess")',
-  t: 'a quick "t" (not "tee")'
+  t: 'a quick "t" (not "tee")',
+  o: 'short "o" as in pot (not "oh")',
+  i: 'short "i" as in sit (not "eye")',
+  d: 'a quick "d" (not "dee")',
+  f: 'blow "fff" (not "eff")',
+  p: 'a quick puff "p" (not "pee")'
 };
 const clipRaw = {};      // key -> ArrayBuffer: recorded on THIS device
 const repoRaw = {};      // key -> ArrayBuffer: sounds/ folder uploaded with the site
@@ -1023,7 +1191,9 @@ const heartSpoken = {
   'as':  'az',
   'the': 'thuh',
   'is':  'iz',
-  'and': 'and'
+  'and': 'and',
+  'i':   'eye',
+  'said': 'sed'
 };
 let heartSpeakTimer = null;
 function speakHeartWord(word) {
@@ -1073,11 +1243,11 @@ function nextHeart() {
 }
 
 // ===== READING WORDS =====
-const readingWords = [
-  { word: 'am', sounds: ['/a/', '/m/'] },
-  { word: 'tan', sounds: ['/t/', '/a/', '/n/'] },
-  { word: 'man', sounds: ['/m/', '/a/', '/n/'] },
-  { word: 'Sam', sounds: ['/S/', '/a/', '/m/'] }
+let readingWords = [
+  { word: 'fad', sounds: ['/f/', '/a/', '/d/'] },
+  { word: 'pod', sounds: ['/p/', '/o/', '/d/'] },
+  { word: 'dim', sounds: ['/d/', '/i/', '/m/'] },
+  { word: 'did', sounds: ['/d/', '/i/', '/d/'] }
 ];
 let readIndex = 0;
 
@@ -1107,11 +1277,11 @@ function nextReading() {
 }
 
 // ===== WORD CHAIN =====
-const chainSteps = [
-  { word: 'Sam', prompt: 'Change the S to a T. What word do you have now?<br><span class="zh">把 S 改成 T。现在是什么单词？</span>', answer: 'Tam' },
-  { word: 'Tam', prompt: 'Now change Tam to am.<br><span class="zh">现在把 Tam 改成 am。</span>', answer: 'am' },
-  { word: 'am', prompt: 'Now change the m to a n. What word do you have now?<br><span class="zh">现在把 m 改成 n。现在是什么单词？</span>', answer: 'an' },
-  { word: 'an', prompt: 'You finished the chain! Great job!<br><span class="zh">你完成单词链了！太棒了！</span>', answer: '' }
+let chainSteps = [
+  { word: 'mad', prompt: 'Write the word mad. Now change the m to a t. What word do you have now?<br><span class="zh">写单词 mad。现在把 m 改成 t。现在是什么单词？</span>', answer: 'tad' },
+  { word: 'tad', prompt: 'Now change tad to pad.<br><span class="zh">现在把 tad 改成 pad。</span>', answer: 'pad' },
+  { word: 'pad', prompt: 'Now change the a to an o. What word do you have now?<br><span class="zh">现在把 a 改成 o。现在是什么单词？</span>', answer: 'pod' },
+  { word: 'pod', prompt: 'You finished the chain! mad → tad → pad → pod. Great job!<br><span class="zh">你完成单词链了！太棒了！</span>', answer: '' }
 ];
 let chainStep = 0;
 
@@ -1154,45 +1324,80 @@ function checkChain() {
 }
 
 // ===== SENTENCES =====
-const sentences = [
+let sentences = [
   {
-    en: '1. I sit at the fan.',
-    zh: '我坐在风扇旁边。',
-    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#f0f8ff;">
-      <!-- Fan -->
-      <circle cx="220" cy="100" r="40" fill="#ddd" stroke="#333" stroke-width="2"/>
-      <line x1="220" y1="60" x2="220" y2="140" stroke="#333" stroke-width="3"/>
-      <line x1="180" y1="100" x2="260" y2="100" stroke="#333" stroke-width="3"/>
-      <line x1="192" y1="72" x2="248" y2="128" stroke="#333" stroke-width="3"/>
-      <line x1="248" y1="72" x2="192" y2="128" stroke="#333" stroke-width="3"/>
-      <!-- Person sitting -->
-      <circle cx="80" cy="90" r="20" fill="#ffccaa"/>
-      <rect x="65" y="110" width="30" height="40" fill="#4ecdc4" rx="5"/>
-      <line x1="70" y1="150" x2="60" y2="170" stroke="#333" stroke-width="3"/>
-      <line x1="90" y1="150" x2="100" y2="170" stroke="#333" stroke-width="3"/>
-      <text x="150" y="190" font-size="14" text-anchor="middle">I sit at the fan</text>
+    en: '1. The pan did not pop.',
+    zh: '平底锅没有爆开。',
+    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#fff8e1;">
+      <ellipse cx="130" cy="130" rx="62" ry="18" fill="#b2bec3" stroke="#333" stroke-width="2"/>
+      <rect x="190" y="124" width="62" height="9" rx="4" fill="#333"/>
+      <circle cx="108" cy="122" r="7" fill="#ffd93d" stroke="#333"/>
+      <circle cx="130" cy="126" r="7" fill="#ffd93d" stroke="#333"/>
+      <circle cx="152" cy="121" r="7" fill="#ffd93d" stroke="#333"/>
+      <g stroke="#e74c3c" stroke-width="5" fill="none"><circle cx="130" cy="62" r="30"/><line x1="109" y1="83" x2="151" y2="41"/></g>
+      <text x="150" y="190" font-size="14" text-anchor="middle">The pan did not pop</text>
     </svg>`
   },
   {
-    en: '2. Sam and Tam tip the pan.',
-    zh: '山姆和塔姆倾斜平底锅。',
-    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#fff8e1;">
-      <!-- Pan -->
-      <ellipse cx="150" cy="120" rx="50" ry="15" fill="#ffd93d" stroke="#333" stroke-width="2"/>
-      <rect x="190" y="115" width="30" height="8" fill="#333"/>
-      <!-- Sam -->
-      <circle cx="80" cy="80" r="18" fill="#ffccaa"/>
-      <rect x="68" y="98" width="24" height="35" fill="#ff6b6b" rx="4"/>
-      <text x="80" y="70" font-size="12" text-anchor="middle">Sam</text>
-      <!-- Tam -->
-      <circle cx="220" cy="80" r="18" fill="#ffccaa"/>
-      <rect x="208" y="98" width="24" height="35" fill="#4ecdc4" rx="4"/>
-      <text x="220" y="70" font-size="12" text-anchor="middle">Tam</text>
-      <!-- Tipping hands -->
-      <line x1="95" y1="110" x2="120" y2="115" stroke="#333" stroke-width="3"/>
-      <line x1="205" y1="110" x2="180" y2="115" stroke="#333" stroke-width="3"/>
-      <text x="150" y="190" font-size="14" text-anchor="middle">Sam and Tam tip the pan</text>
+    en: '2. Sam sat on the dot.',
+    zh: '山姆坐在圆点上。',
+    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#f0f8ff;">
+      <circle cx="150" cy="140" r="42" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+      <circle cx="150" cy="56" r="16" fill="#ffccaa"/>
+      <text x="150" y="30" font-size="12" text-anchor="middle">Sam</text>
+      <rect x="137" y="72" width="26" height="30" fill="#4ecdc4" rx="4"/>
+      <line x1="142" y1="100" x2="122" y2="104" stroke="#333" stroke-width="4"/>
+      <line x1="158" y1="100" x2="178" y2="104" stroke="#333" stroke-width="4"/>
+      <text x="150" y="192" font-size="14" text-anchor="middle">Sam sat on the dot</text>
     </svg>`
+  },
+  {
+    en: '3. Dad is sad.',
+    zh: '爸爸很难过。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '4. Dad did not fit in the pit.',
+    zh: '爸爸挤不进坑里。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '5. Sid is not sad.',
+    zh: '西德不难过。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '6. Sid can fit in the pit.',
+    zh: '西德能挤进坑里。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '7. Dad is mad.',
+    zh: '爸爸很生气。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '8. Dad did not sit in the pit.',
+    zh: '爸爸没有坐进坑里。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '9. Sid is not mad.',
+    zh: '西德不生气。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
+  },
+  {
+    en: '10. Sid can sit in the pit.',
+    zh: '西德能坐进坑里。',
+    label: '📖 Story: Sid and Dad / 故事：西德和爸爸',
+    sample: ''
   }
 ];
 let sentIndex = 0;
@@ -1205,8 +1410,23 @@ function initSentences() {
 
 function showSentence() {
   const s = sentences[sentIndex];
-  document.getElementById('sentenceText').innerHTML = s.en + '<br><span class="zh">' + s.zh + '</span>';
+  const label = s.label ? '<div style="font-size:0.7em; color:#e67e22; margin-bottom:6px;">' + s.label + '</div>' : '';
+  document.getElementById('sentenceText').innerHTML = label + s.en + '<br><span class="zh">' + s.zh + '</span>';
   document.getElementById('samplePicture').innerHTML = s.sample;
+  const caption = document.getElementById('sampleCaption');
+  if (caption) caption.style.display = s.sample ? 'block' : 'none';
+  // Word chips for the current sentence
+  const list = document.getElementById('sentWordList');
+  if (list) {
+    list.innerHTML = '';
+    s.en.replace(/^\d+\.\s*/, '').replace(/[.,?!]/g, '').split(/\s+/).forEach(word => {
+      const chip = document.createElement('span');
+      chip.className = 'word-chip';
+      chip.textContent = word;
+      chip.onclick = () => speakWord(chip);
+      list.appendChild(chip);
+    });
+  }
 }
 
 function nextSentence() {
@@ -1323,9 +1543,9 @@ document.addEventListener('DOMContentLoaded', initCanvas);
 setTimeout(initCanvas, 100);
 
 // ===== DICTATION =====
-const dictationSentences = [
-  'I tap the pan.',
-  'I sat at the tan map.'
+let dictationSentences = [
+  'Did Sam tap the map?',
+  'Tom did nod at Sam.'
 ];
 let dictIndex = 0;
 
@@ -1517,6 +1737,261 @@ function initShapes() {
   setFillColor('blue');
   renderShapeQuestion();
 }
+
+
+// ===== RECTANGLES IN THE KITCHEN =====
+const kitchenGoal = 6;
+let kitchenFound = 0;
+let kitchenRewarded = false;
+
+function playDing() {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  tone(ctx, 880, t, 0.18, 'triangle', 0.2);
+  tone(ctx, 1320, t + 0.08, 0.25, 'triangle', 0.18);
+}
+
+function updateKitchenCount() {
+  const total = document.querySelectorAll('.k-item[data-rect="1"]').length;
+  document.getElementById('kitchenCount').innerHTML =
+    '🔍 Found: ' + kitchenFound + ' rectangles (goal: ' + kitchenGoal + ' or more!)<br>' +
+    '<span class="zh">找到：' + kitchenFound + ' 个长方形（目标：至少 ' + kitchenGoal + ' 个！共 ' + total + ' 个）</span>';
+}
+
+function resetKitchen() {
+  kitchenFound = 0;
+  kitchenRewarded = false;
+  document.querySelectorAll('.k-item').forEach(el => el.classList.remove('found', 'nope'));
+  const fb = document.getElementById('kitchenFeedback');
+  fb.textContent = '';
+  fb.className = 'feedback';
+  updateKitchenCount();
+}
+
+function kitchenClick(e) {
+  const el = e.target;
+  if (!el.classList || !el.classList.contains('k-item') || el.classList.contains('found')) return;
+  const fb = document.getElementById('kitchenFeedback');
+  if (el.getAttribute('data-rect') === '1') {
+    el.classList.add('found');
+    kitchenFound++;
+    updateKitchenCount();
+    if (kitchenFound >= kitchenGoal && !kitchenRewarded) {
+      kitchenRewarded = true;
+      fb.textContent = '🌟 You found ' + kitchenGoal + ' rectangles! Keep looking for more! / 你找到了 ' + kitchenGoal + ' 个长方形！继续找！';
+      fb.className = 'feedback correct';
+      updateStars(3);
+    } else {
+      fb.textContent = '✅ Yes! A rectangle! / 对！是长方形！';
+      fb.className = 'feedback correct';
+      playDing();
+    }
+  } else {
+    el.classList.add('nope');
+    setTimeout(() => el.classList.remove('nope'), 700);
+    fb.textContent = 'Hmm, that one is not a rectangle. Try another! / 嗯，这个不是长方形。再试一个！';
+    fb.className = 'feedback try-again';
+    wrongAnswer();
+  }
+}
+
+// ===== COMPLETE THE PICTURE =====
+const spotColors = { triangle: '#ff6b6b', square: '#ffd93d', rectangle: '#a29bfe', circle: '#4ecdc4' };
+const completeScenes = [
+  {
+    name: 'Fish / 小鱼',
+    svg: `<svg viewBox="0 0 300 170" style="width:100%; max-width:420px; border:3px solid #4ecdc4; border-radius:12px; background:#e8f8ff;">
+      <ellipse cx="170" cy="85" rx="65" ry="42" fill="#ffb347" stroke="#333" stroke-width="3"/>
+      <path d="M135 55 Q150 85 135 115 M160 50 Q175 85 160 120 M185 52 Q198 85 185 118" fill="none" stroke="#333" stroke-width="3"/>
+      <circle cx="212" cy="75" r="6" fill="#fff" stroke="#333" stroke-width="2"/><circle cx="213" cy="75" r="2.5" fill="#333"/>
+      <polygon class="spot" data-type="triangle" points="106,85 45,45 45,125"/>
+    </svg>`,
+    spots: 1
+  },
+  {
+    name: 'House / 房子',
+    svg: `<svg viewBox="0 0 300 230" style="width:100%; max-width:420px; border:3px solid #4ecdc4; border-radius:12px; background:#e8f8ff;">
+      <rect x="0" y="205" width="300" height="25" fill="#9be08e"/>
+      <rect x="70" y="95" width="160" height="112" fill="#fff3d6" stroke="#333" stroke-width="3"/>
+      <polygon points="58,95 150,32 242,95" fill="#c0392b" stroke="#333" stroke-width="3"/>
+      <rect class="spot" data-type="square" x="92" y="120" width="44" height="44"/>
+      <rect class="spot" data-type="rectangle" x="172" y="140" width="38" height="67"/>
+    </svg>`,
+    spots: 2
+  },
+  {
+    name: 'Car / 小汽车',
+    svg: `<svg viewBox="0 0 300 170" style="width:100%; max-width:420px; border:3px solid #4ecdc4; border-radius:12px; background:#e8f8ff;">
+      <rect x="0" y="140" width="300" height="30" fill="#b2bec3"/>
+      <rect x="35" y="75" width="230" height="45" rx="14" fill="#ff6b6b" stroke="#333" stroke-width="3"/>
+      <polygon points="85,75 115,40 205,40 235,75" fill="#ff8e8e" stroke="#333" stroke-width="3"/>
+      <polygon points="100,75 122,48 150,48 150,75" fill="#dff6ff" stroke="#333" stroke-width="2"/>
+      <polygon points="158,75 158,48 198,48 218,75" fill="#dff6ff" stroke="#333" stroke-width="2"/>
+      <circle cx="95" cy="123" r="24" fill="#333"/><circle cx="95" cy="123" r="8" fill="#ccc"/>
+      <circle class="spot" data-type="circle" cx="215" cy="123" r="24"/>
+    </svg>`,
+    spots: 1
+  }
+];
+let completeIndex = 0;
+let pickedShape = null;
+let spotsFilled = 0;
+
+function initComplete() {
+  completeIndex = 0;
+  pickedShape = null;
+  renderCompleteScene();
+}
+
+function pickShape(type) {
+  pickedShape = type;
+  document.querySelectorAll('.shape-pick').forEach(b => b.classList.toggle('selected', b.getAttribute('data-shape') === type));
+  const names = { triangle: 'Triangle / 三角形', square: 'Square / 正方形', rectangle: 'Rectangle / 长方形', circle: 'Circle / 圆形' };
+  document.getElementById('completeSelected').textContent = 'Picked: ' + names[type] + ' — now tap the dotted spot! / 已选：' + names[type];
+}
+
+function renderCompleteScene() {
+  const sc = completeScenes[completeIndex];
+  spotsFilled = 0;
+  document.getElementById('completeNum').textContent = 'Picture ' + (completeIndex + 1) + ' of ' + completeScenes.length + ' — ' + sc.name;
+  const box = document.getElementById('completeScene');
+  box.innerHTML = sc.svg;
+  box.querySelector('svg').addEventListener('click', completeClick);
+  const fb = document.getElementById('completeFeedback');
+  fb.textContent = '';
+  fb.className = 'feedback';
+  if (!pickedShape) document.getElementById('completeSelected').textContent = 'Pick a shape first! / 先选一个图形！';
+}
+
+function completeClick(e) {
+  const el = e.target;
+  if (!el.classList || !el.classList.contains('spot') || el.classList.contains('filled')) return;
+  const fb = document.getElementById('completeFeedback');
+  if (!pickedShape) {
+    fb.textContent = 'Pick a shape first! / 先选一个图形！';
+    fb.className = 'feedback try-again';
+    return;
+  }
+  if (el.getAttribute('data-type') === pickedShape) {
+    el.classList.add('filled');
+    el.style.fill = spotColors[pickedShape];
+    spotsFilled++;
+    if (spotsFilled >= completeScenes[completeIndex].spots) {
+      fb.textContent = '🌟 Picture complete! Great job! / 图画完成了！太棒了！';
+      fb.className = 'feedback correct';
+      updateStars(2);
+    } else {
+      fb.textContent = '✅ That shape fits! Keep going! / 这个图形合适！继续！';
+      fb.className = 'feedback correct';
+      playDing();
+    }
+  } else {
+    fb.textContent = 'Not that one. Look at the dotted shape and try again! / 不是这个。看看虚线的形状，再试一次！';
+    fb.className = 'feedback try-again';
+    wrongAnswer();
+  }
+}
+
+function nextCompleteScene() {
+  completeIndex = (completeIndex + 1) % completeScenes.length;
+  renderCompleteScene();
+}
+
+// ===== WEEKS =====
+// Each week holds its own words, chain, sentences and dictation.
+const weekData = {
+  oct13: {
+    subtitle: 'Week of October 13 • Due October 16 • Let\'s practice and have fun!<br>\n    <span class="zh">10月13日这周 • 10月16日交 • 一起练习，开心学习！</span>',
+    heartWords: ['a', 'as', 'the', 'is', 'and'],
+    readingWords: [
+  { word: 'am', sounds: ['/a/', '/m/'] },
+  { word: 'tan', sounds: ['/t/', '/a/', '/n/'] },
+  { word: 'man', sounds: ['/m/', '/a/', '/n/'] },
+  { word: 'Sam', sounds: ['/S/', '/a/', '/m/'] }
+],
+    chainSteps: [
+  { word: 'Sam', prompt: 'Change the S to a T. What word do you have now?<br><span class="zh">把 S 改成 T。现在是什么单词？</span>', answer: 'Tam' },
+  { word: 'Tam', prompt: 'Now change Tam to am.<br><span class="zh">现在把 Tam 改成 am。</span>', answer: 'am' },
+  { word: 'am', prompt: 'Now change the m to a n. What word do you have now?<br><span class="zh">现在把 m 改成 n。现在是什么单词？</span>', answer: 'an' },
+  { word: 'an', prompt: 'You finished the chain! Great job!<br><span class="zh">你完成单词链了！太棒了！</span>', answer: '' }
+],
+    sentences: [
+  {
+    en: '1. I sit at the fan.',
+    zh: '我坐在风扇旁边。',
+    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#f0f8ff;">
+      <!-- Fan -->
+      <circle cx="220" cy="100" r="40" fill="#ddd" stroke="#333" stroke-width="2"/>
+      <line x1="220" y1="60" x2="220" y2="140" stroke="#333" stroke-width="3"/>
+      <line x1="180" y1="100" x2="260" y2="100" stroke="#333" stroke-width="3"/>
+      <line x1="192" y1="72" x2="248" y2="128" stroke="#333" stroke-width="3"/>
+      <line x1="248" y1="72" x2="192" y2="128" stroke="#333" stroke-width="3"/>
+      <!-- Person sitting -->
+      <circle cx="80" cy="90" r="20" fill="#ffccaa"/>
+      <rect x="65" y="110" width="30" height="40" fill="#4ecdc4" rx="5"/>
+      <line x1="70" y1="150" x2="60" y2="170" stroke="#333" stroke-width="3"/>
+      <line x1="90" y1="150" x2="100" y2="170" stroke="#333" stroke-width="3"/>
+      <text x="150" y="190" font-size="14" text-anchor="middle">I sit at the fan</text>
+    </svg>`
+  },
+  {
+    en: '2. Sam and Tam tip the pan.',
+    zh: '山姆和塔姆倾斜平底锅。',
+    sample: `<svg viewBox="0 0 300 200" width="280" height="180" style="border:1px solid #ddd; border-radius:8px; background:#fff8e1;">
+      <!-- Pan -->
+      <ellipse cx="150" cy="120" rx="50" ry="15" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+      <rect x="190" y="115" width="30" height="8" fill="#333"/>
+      <!-- Sam -->
+      <circle cx="80" cy="80" r="18" fill="#ffccaa"/>
+      <rect x="68" y="98" width="24" height="35" fill="#ff6b6b" rx="4"/>
+      <text x="80" y="70" font-size="12" text-anchor="middle">Sam</text>
+      <!-- Tam -->
+      <circle cx="220" cy="80" r="18" fill="#ffccaa"/>
+      <rect x="208" y="98" width="24" height="35" fill="#4ecdc4" rx="4"/>
+      <text x="220" y="70" font-size="12" text-anchor="middle">Tam</text>
+      <!-- Tipping hands -->
+      <line x1="95" y1="110" x2="120" y2="115" stroke="#333" stroke-width="3"/>
+      <line x1="205" y1="110" x2="180" y2="115" stroke="#333" stroke-width="3"/>
+      <text x="150" y="190" font-size="14" text-anchor="middle">Sam and Tam tip the pan</text>
+    </svg>`
+  }
+],
+    dictationSentences: [
+  'I tap the pan.',
+  'I sat at the tan map.'
+]
+  },
+  oct19: {
+    subtitle: 'Week of October 19 • Due October 23 • Let\'s practice and have fun!<br>\n    <span class="zh">10月19日这周 • 10月23日交 • 一起练习，开心学习！</span>',
+    heartWords, readingWords, chainSteps, sentences, dictationSentences
+  }
+};
+let currentWeek = 'oct19';
+
+function setWeek(id) {
+  const w = weekData[id];
+  if (!w) return;
+  currentWeek = id;
+  heartWords = w.heartWords;
+  readingWords = w.readingWords;
+  chainSteps = w.chainSteps;
+  sentences = w.sentences;
+  dictationSentences = w.dictationSentences;
+  heartIndex = 0; readIndex = 0; chainStep = 0; sentIndex = 0; dictIndex = 0;
+  document.getElementById('weekSubtitle').innerHTML = w.subtitle;
+  document.querySelectorAll('[data-week]').forEach(b => {
+    b.style.display = (b.getAttribute('data-week') === id) ? '' : 'none';
+  });
+  document.querySelectorAll('.week-btn').forEach(b => b.classList.toggle('selected', b.id === 'weekBtn_' + id));
+  try { localStorage.setItem('liamWeek', id); } catch (e) {}
+}
+
+(function () {
+  let saved = null;
+  try { saved = localStorage.getItem('liamWeek'); } catch (e) {}
+  setWeek(weekData[saved] ? saved : 'oct19');
+})();
 
 // Make sure voices are loaded (helps on mobile)
 if ('speechSynthesis' in window) {
